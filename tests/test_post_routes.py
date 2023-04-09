@@ -1,4 +1,5 @@
 import unittest
+import json
 from flask import Flask
 from flask_testing import TestCase
 from spyglasses import create_app
@@ -26,7 +27,6 @@ class TestPostRoutes(TestCase):
 
     def test_get_posts(self):
         response = self.client.get('/api/v1/posts')
-        print(response.data)
         self.assertEqual(response.status_code, 200)
         data = response.json
         self.assertEqual(len(data), 2)
@@ -37,6 +37,32 @@ class TestPostRoutes(TestCase):
             self.assertIn('post_type', post)
             self.assertIn('created_at', post)
             self.assertIn('updated_at', post)
+
+    def test_create_post(self):
+        # Test creating a post with valid data
+        data = {
+            'content': 'This is a test post.',
+            'post_type': 'public'
+        }
+        response = self.client.post(
+            '/api/v1/posts', data=json.dumps(data), content_type='application/json')
+        self.assertEqual(response.status_code, 201)
+        response_data = json.loads(response.data)
+        self.assertIn('post_id', response_data)
+        self.assertIn('message', response_data)
+        self.assertEqual(response_data['message'], 'Post created successfully')
+
+        # Test creating a post with missing data
+        data = {
+            'content': 'This is another test post.'
+        }
+        response = self.client.post(
+            '/api/v1/posts', data=json.dumps(data), content_type='application/json')
+        self.assertEqual(response.status_code, 400)
+        response_data = json.loads(response.data)
+        self.assertIn('error', response_data)
+        self.assertEqual(
+            response_data['error'], 'Missing content or post_type in request data')
 
 
 if __name__ == '__main__':

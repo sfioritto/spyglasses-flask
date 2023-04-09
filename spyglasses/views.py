@@ -1,5 +1,5 @@
-from flask import jsonify, Blueprint
-from spyglasses.models import Post
+from flask import jsonify, request, Blueprint
+from spyglasses.models import Post, db
 
 bp = Blueprint("views", __name__, url_prefix="/api/v1")
 
@@ -24,8 +24,19 @@ def get_posts():
 
 @bp.route('/posts', methods=['POST'])
 def create_post():
-    # Code for creating a new post
-    pass
+    data = request.get_json()
+    if not data or 'content' not in data or 'post_type' not in data:
+        return jsonify({"error": "Missing content or post_type in request data"}), 400
+
+    post = Post(content=data['content'], post_type=data['post_type'])
+
+    if 'blurb' in data:
+        post.blurb = data['blurb']
+
+    db.session.add(post)
+    db.session.commit()
+
+    return jsonify({"message": "Post created successfully", "post_id": post.id}), 201
 
 
 @bp.route('/posts/<int:post_id>', methods=['GET'])
