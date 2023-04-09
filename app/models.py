@@ -1,3 +1,4 @@
+from datetime import datetime
 from app import db
 
 
@@ -5,6 +6,10 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     post_type = db.Column(db.String(10), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, nullable=False,
+                           default=datetime.utcnow, onupdate=datetime.utcnow)
     highlights = db.relationship('Highlight', backref='post', lazy=True)
     notes = db.relationship('Note', backref='post', lazy=True)
 
