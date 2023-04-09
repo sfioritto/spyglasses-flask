@@ -64,6 +64,21 @@ class TestPostRoutes(TestCase):
         self.assertEqual(
             response_data['error'], 'Missing content or post_type in request data')
 
+    def test_get_post(self):
+        post = Post(content='Test content', post_type='public')
+        db.session.add(post)
+        db.session.commit()
+
+        response = self.client.get(f'/api/v1/posts/{post.id}')
+        self.assertEqual(response.status_code, 200)
+        response_data = json.loads(response.data)
+        self.assertIn('post', response_data)
+        self.assertEqual(response_data['post']['content'], 'Test content')
+        self.assertEqual(response_data['post']['post_type'], 'public')
+
+        response = self.client.get('/api/v1/posts/9999')
+        self.assertEqual(response.status_code, 404)
+
 
 if __name__ == '__main__':
     unittest.main()

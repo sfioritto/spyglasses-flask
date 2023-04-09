@@ -41,8 +41,15 @@ def create_post():
 
 @bp.route('/posts/<int:post_id>', methods=['GET'])
 def get_post(post_id):
-    # Code for getting a specific post
-    pass
+    post = Post.query.get_or_404(post_id)
+    return jsonify(post={
+        'id': post.id,
+        'blurb': post.blurb,
+        'content': post.content,
+        'post_type': post.post_type,
+        'created_at': post.created_at.isoformat(),
+        'updated_at': post.updated_at.isoformat()
+    })
 
 
 @bp.route('/posts/<int:post_id>', methods=['PUT'])
