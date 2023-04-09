@@ -5,8 +5,20 @@ from app.models import Post, Note
 
 @app.route('/posts', methods=['GET'])
 def get_posts():
-    posts = Post.query.order_by(Post.created_at.desc()).all()
-    return jsonify([post.to_dict() for post in posts])
+    posts = Post.query.all()
+    post_list = []
+
+    for post in posts:
+        post_data = {
+            'id': post.id,
+            'blurb': post.blurb,
+            'post_type': post.post_type,
+            'created_at': post.created_at,
+            'updated_at': post.updated_at,
+        }
+        post_list.append(post_data)
+
+    return jsonify(post_list)
 
 
 @app.route('/posts', methods=['POST'])
