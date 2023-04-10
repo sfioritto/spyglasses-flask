@@ -83,8 +83,9 @@ def delete_post(post_id):
 
 @bp.route('/posts/<int:post_id>/notes', methods=['GET'])
 def get_notes(post_id):
-    # Code for getting notes of a specific post
-    pass
+    post = Post.query.get_or_404(post_id)
+    notes = [note.to_dict() for note in post.notes]
+    return jsonify(notes)
 
 
 @bp.route('/posts/<int:post_id>/notes', methods=['POST'])

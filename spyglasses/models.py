@@ -1,10 +1,11 @@
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy_serializer import SerializerMixin
 
 db = SQLAlchemy()
 
 
-class Post(db.Model):
+class Post(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     blurb = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=False)
@@ -17,7 +18,7 @@ class Post(db.Model):
     notes = db.relationship('Note', backref='post', lazy=True)
 
 
-class Highlight(db.Model):
+class Highlight(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     start_pos = db.Column(db.Integer, nullable=False)
     end_pos = db.Column(db.Integer, nullable=False)
@@ -25,7 +26,7 @@ class Highlight(db.Model):
     notes = db.relationship('Note', backref='highlight', lazy=True)
 
 
-class Note(db.Model):
+class Note(db.Model, SerializerMixin):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     highlight_id = db.Column(
