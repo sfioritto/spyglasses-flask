@@ -10,10 +10,5 @@ else
 endif
 
 dev:
-ifdef VERSION
-	@echo "Running Flask app with SPYGLASSES_API_VERSION=$(VERSION)"
-	SPYGLASSES_API_VERSION=$(VERSION) flask --app spyglasses run --debug
-else
 	@echo "Running Spyglasses"
 	SPYGLASSES_API_VERSION= flask --app spyglasses run --debug
-endif
