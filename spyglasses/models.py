@@ -27,6 +27,7 @@ class Highlight(db.Model, SerializerMixin):
 
 
 class Note(db.Model, SerializerMixin):
+    serialize_rules = ('-highlight', '-post')
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     highlight_id = db.Column(
