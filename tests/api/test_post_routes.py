@@ -74,9 +74,26 @@ def test_get_post(client):
     response = client.get(f'/api/posts/{post.id}')
     assert response.status_code == 200
     response_data = json.loads(response.data)
-    assert 'post' in response_data
-    assert response_data['post']['content'] == 'Test content'
-    assert response_data['post']['post_type'] == 'public'
+    assert response_data['content'] == 'Test content'
+    assert response_data['post_type'] == 'public'
 
     response = client.get('/api/posts/9999')
     assert response.status_code == 404
+
+
+def test_update_post(client):
+    post = Post(content='Test content', post_type='public')
+    db.session.add(post)
+    db.session.commit()
+    updated_data = {
+        "blurb": "Updated blurb",
+        "content": "Updated content",
+        "post_type": "article"
+    }
+    response = client.put(f'/api/posts/{post.id}', json=updated_data)
+    json_data = response.get_json()
+
+    assert response.status_code == 200
+    assert json_data["blurb"] == updated_data["blurb"]
+    assert json_data["content"] == updated_data["content"]
+    assert json_data["post_type"] == updated_data["post_type"]
