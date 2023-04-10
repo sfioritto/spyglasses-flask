@@ -4,6 +4,13 @@ from spyglasses import create_test_app
 from spyglasses.models import db, Post
 
 
+def create_post():
+    post = Post(content='Test content', post_type='public')
+    db.session.add(post)
+    db.session.commit()
+    return post
+
+
 @pytest.fixture
 def client():
     app = create_test_app()
@@ -67,9 +74,7 @@ def test_create_post(client):
 
 
 def test_get_post(client):
-    post = Post(content='Test content', post_type='public')
-    db.session.add(post)
-    db.session.commit()
+    post = create_post()
 
     response = client.get(f'/api/posts/{post.id}')
     assert response.status_code == 200
@@ -82,9 +87,7 @@ def test_get_post(client):
 
 
 def test_update_post(client):
-    post = Post(content='Test content', post_type='public')
-    db.session.add(post)
-    db.session.commit()
+    post = create_post()
     updated_data = {
         "blurb": "Updated blurb",
         "content": "Updated content",
