@@ -11,4 +11,4 @@ endif
 
 dev:
 	@echo "Running Spyglasses"
-	SPYGLASSES_API_VERSION= flask --app spyglasses run --debug
+	flask --app spyglasses run --debug
