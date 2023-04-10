@@ -10,8 +10,8 @@ def make_app():
 
 
 def register_api(app, url_prefix='/api'):
-    from spyglasses import api
-    app.register_blueprint(api.bp, url_prefix=url_prefix)
+    from spyglasses.api import v1
+    app.register_blueprint(v1.bp, url_prefix=url_prefix)
     # api.init_app(app, **({"url_prefix": url_prefix} if url_prefix else {}))
 
 
