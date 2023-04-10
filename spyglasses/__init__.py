@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 
 
-def create_app(test_config=None):
+def create_app(test_config=None, api_version=None):
     app = Flask(__name__)
     CORS(app)
 
@@ -16,7 +16,8 @@ def create_app(test_config=None):
         app.config.update(test_config)
 
     from spyglasses import views
-    app.register_blueprint(views.bp)
+    api_prefix = f"/api/v{api_version}" if api_version else None
+    app.register_blueprint(views.bp, url_prefix=api_prefix)
 
     from spyglasses.models import db
     db.init_app(app)

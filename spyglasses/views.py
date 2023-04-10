@@ -1,7 +1,7 @@
 from flask import jsonify, request, Blueprint
 from spyglasses.models import Post, db
 
-bp = Blueprint("views", __name__, url_prefix="/api/v1")
+bp = Blueprint("views", __name__)
 
 
 @bp.route('/posts', methods=['GET'])
