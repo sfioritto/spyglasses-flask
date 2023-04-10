@@ -111,3 +111,14 @@ def test_delete_post(client):
     assert response.status_code == 200
     assert deleted_post is None
     assert json_data["message"] == "Post deleted"
+
+
+def test_create_note(client):
+    post = create_post()
+    note_data = {"content": "This is a sample note content."}
+    response = client.post(f'/api/posts/{post.id}/notes', json=note_data)
+    json_data = response.get_json()
+
+    assert response.status_code == 201
+    assert json_data["message"] == "Note created successfully"
+    assert "note_id" in json_data

@@ -1,5 +1,5 @@
 from flask import jsonify, request, Blueprint
-from spyglasses.models import Post, db
+from spyglasses.models import Post, Note, db
 
 bp = Blueprint("v1", __name__)
 
@@ -77,7 +77,15 @@ def get_notes(post_id):
     return jsonify(notes)
 
 
-@ bp.route('/posts/<int:post_id>/notes', methods=['POST'])
+@bp.route('/posts/<int:post_id>/notes', methods=['POST'])
 def create_note(post_id):
-    # Code for creating a new note for a specific post
-    pass
+    post = Post.query.get_or_404(post_id)
+    data = request.get_json()
+    if not data or 'content' not in data:
+        return jsonify({"error": "Missing content in request data"}), 400
+
+    note = Note(content=data['content'], post_id=post.id)
+    db.session.add(note)
+    db.session.commit()
+
+    return jsonify({"message": "Note created successfully", "note_id": note.id}), 201
