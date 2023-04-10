@@ -11,4 +11,4 @@ endif
 
 dev:
 	@echo "Running Spyglasses"
-	flask --app spyglasses run --debug
+	SPYGLASSES_ENVIRONMENT=DEVELOPMENT flask --app spyglasses run --debug

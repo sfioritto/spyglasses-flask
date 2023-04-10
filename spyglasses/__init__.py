@@ -23,8 +23,9 @@ def register_api(app, api_version=None):
         # them with the app.
         from spyglasses import api
 
-        # Register the most recent api version
-        app.register_blueprint(api.bp, name="default", url_prefix='/api')
+        if os.environ.get('SPYGLASSES_ENVIRONMENT', None) == "DEVELOPMENT":
+            # Register the most recent api version
+            app.register_blueprint(api.bp, name="default", url_prefix='/api')
 
         # Iterate through all the submodules in the spyglasses.api package
         module_names = [module_name for _, module_name,
