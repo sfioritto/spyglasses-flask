@@ -100,3 +100,14 @@ def test_update_post(client):
     assert json_data["blurb"] == updated_data["blurb"]
     assert json_data["content"] == updated_data["content"]
     assert json_data["post_type"] == updated_data["post_type"]
+
+
+def test_delete_post(client):
+    post = create_post()
+    response = client.delete(f'/api/posts/{post.id}')
+    deleted_post = Post.query.get(post.id)
+    json_data = response.get_json()
+
+    assert response.status_code == 200
+    assert deleted_post is None
+    assert json_data["message"] == "Post deleted"

@@ -75,8 +75,10 @@ def update_post(post_id):
 
 @bp.route('/posts/<int:post_id>', methods=['DELETE'])
 def delete_post(post_id):
-    # Code for deleting a specific post
-    pass
+    post = Post.query.get_or_404(post_id)
+    db.session.delete(post)
+    db.session.commit()
+    return jsonify({"message": "Post deleted"})
 
 
 @bp.route('/posts/<int:post_id>/notes', methods=['GET'])
