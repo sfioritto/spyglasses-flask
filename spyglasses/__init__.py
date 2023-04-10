@@ -9,9 +9,15 @@ def make_app():
     return app
 
 
-def register_views(app, url_prefix='/api'):
+def register_api(app, url_prefix='/api'):
+    from spyglasses import api
+    app.register_blueprint(api.bp, url_prefix=url_prefix)
+    # api.init_app(app, **({"url_prefix": url_prefix} if url_prefix else {}))
+
+
+def register_views(app):
     from spyglasses import views
-    app.register_blueprint(views.bp, url_prefix=url_prefix)
+    app.register_blueprint(views.bp)
 
 
 def init_db(app):
@@ -29,6 +35,7 @@ def create_test_app():
     app = make_app()
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     register_views(app)
+    register_api(app)
     init_db(app)
     return app
 
@@ -36,7 +43,7 @@ def create_test_app():
 def create_app():
     app = make_app()
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spyglasses.db'
-    api_prefix = f"/api/v{api_version}" if api_version else None
-    register_views(app, **({"url_prefix": api_prefix} if api_prefix else {}))
+    register_views(app)
+    register_api(app)
     init_db(app)
     return app

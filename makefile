@@ -6,7 +6,7 @@ ifdef VERSION
 	SPYGLASSES_API_VERSION=$(VERSION) python -m unittest
 else
 	@echo "Running tests"
-	SPYGLASSES_API_VERSION= python -m unittest
+	python -m unittest
 endif
 
 dev:
