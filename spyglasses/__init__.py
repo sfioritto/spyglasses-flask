@@ -1,4 +1,6 @@
 import os
+import importlib
+import pkgutil
 from flask import Flask
 from flask_cors import CORS
 
@@ -9,10 +11,32 @@ def make_app():
     return app
 
 
-def register_api(app, url_prefix='/api'):
-    from spyglasses.api import v1
-    app.register_blueprint(v1.bp, url_prefix=url_prefix)
-    # api.init_app(app, **({"url_prefix": url_prefix} if url_prefix else {}))
+def register_api(app, api_version=None):
+    # If the api_version is specified, then
+    # only register that version of the API.
+    if api_version:
+        from spyglasses.api import v1
+        app.register_blueprint(v1.bp, url_prefix='/api')
+    else:
+        # This iterates through all of the versions
+        # in the spyglasses.api modeule and registers
+        # them with the app.
+        from spyglasses import api
+
+        # Register the most recent api version
+        app.register_blueprint(api.bp, name="default", url_prefix='/api')
+
+        # Iterate through all the submodules in the spyglasses.api package
+        module_names = [module_name for _, module_name,
+                        _ in pkgutil.iter_modules(api.__path__)]
+        for module_name in module_names:
+            if module_name.startswith('v'):
+                # Import the submodule
+                module = importlib.import_module(
+                    f'spyglasses.api.{module_name}')
+                # Register the blueprint with the app
+                app.register_blueprint(
+                    module.bp, url_prefix=f'/api/{module_name}')
 
 
 def register_views(app):
@@ -29,13 +53,11 @@ def init_db(app):
 
 def create_test_app():
     # Use the environment variable SPYGLASSES_API_VERSION, if it exists.
-    # api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
-    # will use this to run specific versions of the API per run
-    # of the test suite
+    api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
     app = make_app()
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     register_views(app)
-    register_api(app)
+    register_api(app, api_version=api_version)
     init_db(app)
     return app
 
