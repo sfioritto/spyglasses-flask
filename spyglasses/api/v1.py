@@ -4,6 +4,17 @@ from spyglasses.models import Post, db
 bp = Blueprint("v1", __name__)
 
 
+def json_for_post(post):
+    return jsonify({
+        'id': post.id,
+        'blurb': post.blurb,
+        'content': post.content,
+        'post_type': post.post_type,
+        'created_at': post.created_at,
+        'updated_at': post.updated_at,
+    })
+
+
 @bp.route('/posts', methods=['GET'])
 def get_posts():
     posts = Post.query.all()
@@ -42,14 +53,7 @@ def create_post():
 @bp.route('/posts/<int:post_id>', methods=['GET'])
 def get_post(post_id):
     post = Post.query.get_or_404(post_id)
-    return jsonify({
-        'id': post.id,
-        'blurb': post.blurb,
-        'content': post.content,
-        'post_type': post.post_type,
-        'created_at': post.created_at.isoformat(),
-        'updated_at': post.updated_at.isoformat()
-    })
+    return json_for_post(post)
 
 
 @bp.route('/posts/<int:post_id>', methods=['PUT'])
@@ -66,14 +70,7 @@ def update_post(post_id):
 
     db.session.commit()
 
-    return jsonify({
-        'id': post.id,
-        'blurb': post.blurb,
-        'content': post.content,
-        'post_type': post.post_type,
-        'created_at': post.created_at.isoformat(),
-        'updated_at': post.updated_at.isoformat()
-    })
+    return json_for_post(post)
 
 
 @bp.route('/posts/<int:post_id>', methods=['DELETE'])
