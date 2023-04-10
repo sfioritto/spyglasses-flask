@@ -13,4 +13,4 @@ test:
 
 dev:
 	@echo "Running Spyglasses"
-	SPYGLASSES_ENVIRONMENT=DEVELOPMENT flask --app spyglasses run --debug
+	SPYGLASSES_ENVIRONMENT=DEVELOPMENT flask --app spyglasses run --debug --port 8000
