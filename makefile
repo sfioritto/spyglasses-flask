@@ -1,13 +1,15 @@
 .PHONY: test dev
 
 test:
-ifdef VERSION
-	@echo "Running tests with SPYGLASSES_API_VERSION=$(VERSION)"
-	SPYGLASSES_API_VERSION=$(VERSION) python -m unittest
-else
-	@echo "Running tests"
-	python -m unittest
-endif
+	@for file in ./spyglasses/api/*; do \
+		number=$$(echo $$file | sed -n 's/.*v\([0-9]*\).*/\1/p'); \
+		if [ ! -z "$$number" ]; then \
+			echo "Running tests with SPYGLASSES_API_VERSION=$$number"; \
+			SPYGLASSES_API_VERSION=$$number python -m unittest; \
+		fi; \
+	done
+
+
 
 dev:
 	@echo "Running Spyglasses"

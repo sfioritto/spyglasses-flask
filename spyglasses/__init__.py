@@ -15,7 +15,7 @@ def register_api(app, api_version=None):
     # If the api_version is specified, then
     # only register that version of the API.
     if api_version:
-        api_module = importlib.import_module(f"spyglasses.api.{api_version}")
+        api_module = importlib.import_module(f"spyglasses.api.v{api_version}")
         app.register_blueprint(api_module.bp, url_prefix='/api')
     else:
         # This iterates through all of the versions
