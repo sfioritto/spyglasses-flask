@@ -1,5 +1,6 @@
 from flask import jsonify, request, Blueprint
 from spyglasses.models import Post, Note, User, db
+from werkzeug.security import generate_password_hash, check_password_hash
 
 bp = Blueprint("v1", __name__)
 
@@ -98,12 +99,11 @@ def create_note(post_id):
 def create_user():
     data = request.get_json()
     username = data.get('username')
-    email = data.get('email')
 
-    if not username or not email:
-        return jsonify({"error": "Missing username or email"}), 400
+    if not username:
+        return jsonify({"error": "Missing username"}), 400
 
-    new_user = User(username=username, email=email)
+    new_user = User(username=username)
     db.session.add(new_user)
     db.session.commit()
 
@@ -129,15 +129,12 @@ def update_user(user_id):
 
     data = request.get_json()
     username = data.get('username')
-    email = data.get('email')
 
-    if not username and not email:
+    if not username:
         return jsonify({"error": "Nothing to update"}), 400
 
     if username:
         user.username = username
-    if email:
-        user.email = email
 
     db.session.commit()
 

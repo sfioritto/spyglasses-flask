@@ -4,10 +4,10 @@ from spyglasses import create_test_app
 from spyglasses.models import db, Post, User
 
 
-def get_or_create_user(username="user1", email="user1@example.com"):
+def get_or_create_user(username="user1"):
     user = User.query.filter_by(username=username).first()
     if user is None:
-        user = User(username=username, email=email)
+        user = User(username=username)
         db.session.add(user)
         db.session.commit()
     return user
