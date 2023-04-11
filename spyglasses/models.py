@@ -5,7 +5,16 @@ from sqlalchemy_serializer import SerializerMixin
 db = SQLAlchemy()
 
 
+class User(db.Model, SerializerMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(64), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    posts = db.relationship('Post', backref='user', lazy=True)
+
+
 class Post(db.Model, SerializerMixin):
+    serialize_only = ('id', 'blurb', 'content',
+                      'post_type', 'created_at', 'user.id')
     id = db.Column(db.Integer, primary_key=True)
     blurb = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=False)
@@ -16,6 +25,7 @@ class Post(db.Model, SerializerMixin):
                            default=datetime.utcnow, onupdate=datetime.utcnow)
     highlights = db.relationship('Highlight', backref='post', lazy=True)
     notes = db.relationship('Note', backref='post', lazy=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
 class Highlight(db.Model, SerializerMixin):

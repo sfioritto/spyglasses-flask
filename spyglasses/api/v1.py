@@ -1,5 +1,5 @@
 from flask import jsonify, request, Blueprint
-from spyglasses.models import Post, Note, db
+from spyglasses.models import Post, Note, User, db
 
 bp = Blueprint("v1", __name__)
 
@@ -28,6 +28,9 @@ def create_post():
     if not data or 'content' not in data or 'post_type' not in data:
         return jsonify({"error": "Missing content or post_type in request data"}), 400
 
+    # todo: need to get current user here from request maybe?
+    # need to figure out how I'm getting the user from the request
+    # using Json web tokens
     post = Post(content=data['content'], post_type=data['post_type'])
 
     if 'blurb' in data:
@@ -89,3 +92,66 @@ def create_note(post_id):
     db.session.commit()
 
     return jsonify({"message": "Note created successfully", "note_id": note.id}), 201
+
+
+@bp.route('/user', methods=['POST'])
+def create_user():
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+
+    if not username or not email:
+        return jsonify({"error": "Missing username or email"}), 400
+
+    new_user = User(username=username, email=email)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return jsonify(new_user.to_dict()), 201
+
+
+@bp.route('/user/<int:user_id>', methods=['GET'])
+def get_user(user_id):
+    user = User.query.get(user_id)
+
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+
+    return jsonify(user.to_dict()), 200
+
+
+@bp.route('/user/<int:user_id>', methods=['PUT'])
+def update_user(user_id):
+    user = User.query.get(user_id)
+
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.get_json()
+    username = data.get('username')
+    email = data.get('email')
+
+    if not username and not email:
+        return jsonify({"error": "Nothing to update"}), 400
+
+    if username:
+        user.username = username
+    if email:
+        user.email = email
+
+    db.session.commit()
+
+    return jsonify(user.to_dict()), 200
+
+
+@bp.route('/user/<int:user_id>', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+
+    if user is None:
+        return jsonify({"error": "User not found"}), 404
+
+    db.session.delete(user)
+    db.session.commit()
+
+    return jsonify({"result": "User deleted"}), 200
