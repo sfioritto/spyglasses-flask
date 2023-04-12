@@ -1,7 +1,8 @@
 import pytest
 from flask import json
 from spyglasses import create_test_app
-from spyglasses.models import User, db
+from spyglasses.models import db
+from tests.api import get_or_create_user
 
 
 @pytest.fixture
@@ -20,7 +21,7 @@ def client():
 
 def test_create_user(client):
     response = client.post(
-        '/api/user', json={"username": "testuser"})
+        '/api/user', json={"username": "testuser", "password": "testpassword"})
     assert response.status_code == 201
     assert response.get_json()["username"] == "testuser"
 
@@ -31,13 +32,11 @@ def test_create_user(client):
 
 
 def test_get_user(client):
-    user = User(username="testuser")
-    db.session.add(user)
-    db.session.commit()
+    user = get_or_create_user()
 
     response = client.get(f'/api/user/{user.id}')
     assert response.status_code == 200
-    assert response.get_json()["username"] == "testuser"
+    assert response.get_json()["username"] == user.username
 
 
 def test_get_user_not_found(client):
@@ -46,9 +45,7 @@ def test_get_user_not_found(client):
 
 
 def test_update_user(client):
-    user = User(username="testuser")
-    db.session.add(user)
-    db.session.commit()
+    user = get_or_create_user()
 
     response = client.put(
         f'/api/user/{user.id}', json={"username": "updateduser"})
@@ -57,18 +54,14 @@ def test_update_user(client):
 
 
 def test_update_user_nothing_to_update(client):
-    user = User(username="testuser")
-    db.session.add(user)
-    db.session.commit()
+    user = get_or_create_user()
 
     response = client.put(f'/api/user/{user.id}', json={})
     assert response.status_code == 400
 
 
 def test_delete_user(client):
-    user = User(username="testuser")
-    db.session.add(user)
-    db.session.commit()
+    user = get_or_create_user()
 
     response = client.delete(f'/api/user/{user.id}')
     assert response.status_code == 200

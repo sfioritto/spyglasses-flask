@@ -56,6 +56,7 @@ def create_test_app():
     # Use the environment variable SPYGLASSES_API_VERSION, if it exists.
     api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
     app = make_app()
+    app.config['SECRET_KEY'] = os.urandom(16)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     register_views(app)
     register_api(app, api_version=api_version)
@@ -64,7 +65,9 @@ def create_test_app():
 
 
 def create_app():
+    secret_key = os.environ.get('SECRET_KEY', None)
     app = make_app()
+    app.config['SECRET_KEY'] = secret_key
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spyglasses.db'
     register_views(app)
     register_api(app)

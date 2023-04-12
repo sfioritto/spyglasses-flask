@@ -6,8 +6,10 @@ db = SQLAlchemy()
 
 
 class User(db.Model, SerializerMixin):
+    serialize_only = ('id', 'username')
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
+    password = db.Column(db.String(120), nullable=False)
     posts = db.relationship('Post', backref='user', lazy=True)
 
 

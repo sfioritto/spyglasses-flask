@@ -1,4 +1,5 @@
 from flask import jsonify, request, Blueprint
+from flask_jwt_extended import create_access_token
 from spyglasses.models import Post, Note, User, db
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -99,11 +100,17 @@ def create_note(post_id):
 def create_user():
     data = request.get_json()
     username = data.get('username')
+    password = data.get('password')
 
-    if not username:
-        return jsonify({"error": "Missing username"}), 400
+    if not username or not password:
+        return jsonify({"error": "Missing username or password"}), 400
 
-    new_user = User(username=username)
+    user = User.query.filter_by(username=username).first()
+    if user:
+        return jsonify({"msg": "Username already exists"}), 400
+
+    hashed_password = generate_password_hash(password)
+    new_user = User(username=username, password=hashed_password)
     db.session.add(new_user)
     db.session.commit()
 
@@ -152,3 +159,19 @@ def delete_user(user_id):
     db.session.commit()
 
     return jsonify({"result": "User deleted"}), 200
+
+
+@bp.route('/api/login', methods=['POST'])
+def create_token():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({"msg": "Missing username or password"}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({"msg": "Invalid username or password"}), 401
+
+    access_token = create_access_token(identity=user.id)
+    return jsonify({"access_token": access_token}), 200
