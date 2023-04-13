@@ -8,9 +8,9 @@ def test_create_user(test_client):
     assert response.get_json()["username"] == "testuser"
 
 
-# def test_create_user_missing_fields(test_client):
-#     response = test_client.post('/api/user', json={"username": "testuser"})
-#     assert response.status_code == 400
+def test_create_user_missing_fields(test_client):
+    response = test_client.post('/api/user', json={"username": "testuser"})
+    assert response.status_code == 400
 
 
 def test_get_user(test_client):
