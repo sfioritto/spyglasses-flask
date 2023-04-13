@@ -106,7 +106,7 @@ def update_post(post_id):
     return jsonify(post.to_dict())
 
 
-@ bp.route('/posts/<int:post_id>', methods=['DELETE'])
+@bp.route('/posts/<int:post_id>', methods=['DELETE'])
 def delete_post(post_id):
     post = Post.query.get_or_404(post_id)
     db.session.delete(post)
@@ -114,7 +114,7 @@ def delete_post(post_id):
     return jsonify({"message": "Post deleted"})
 
 
-@ bp.route('/posts/<int:post_id>/notes', methods=['GET'])
+@bp.route('/posts/<int:post_id>/notes', methods=['GET'])
 def get_notes(post_id):
     post = Post.query.get_or_404(post_id)
     notes = [note.to_dict() for note in post.notes]
