@@ -1,9 +1,6 @@
 import json
-import pytest
-from flask import Flask
-from spyglasses import create_test_app
-from spyglasses.models import db, Post
-from tests.api import create_post, CustomTestClient
+from spyglasses.models import Post
+from tests.api import create_post
 
 
 def test_get_posts(test_client, user):

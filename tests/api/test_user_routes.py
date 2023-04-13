@@ -1,8 +1,4 @@
-import pytest
-from flask import Flask
-from spyglasses import create_test_app
-from spyglasses.models import db
-from tests.api import get_or_create_user, CustomTestClient
+from tests.api import get_or_create_user
 
 
 def test_create_user(test_client):

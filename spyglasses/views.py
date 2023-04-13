@@ -1,4 +1,4 @@
-from flask import jsonify, request, Blueprint
+from flask import Blueprint
 
 bp = Blueprint("views", __name__)
 
