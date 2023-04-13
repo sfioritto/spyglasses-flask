@@ -62,26 +62,23 @@ def jwt(app):
     JWTManager(app)
 
 
-def create_test_app():
-    # Use the environment variable SPYGLASSES_API_VERSION, if it exists.
-    api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
-    app = make_app()
-    jwt(app)
-    # Generate a random secret key for the test app
-    # overwriting the one set by the jwt function.
-    app.config['SECRET_KEY'] = os.urandom(16)
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
-    register_views(app)
-    register_api(app, api_version=api_version)
-    init_db(app)
-    return app
-
-
-def create_app():
+def create_app(api_version=None):
     app = make_app()
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spyglasses.db'
     jwt(app)
     register_views(app)
-    register_api(app)
+    register_api(app, api_version)
     init_db(app)
+    return app
+
+
+def create_test_app():
+    api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
+    app = create_app(api_version)
+    # Use the environment variable SPYGLASSES_API_VERSION, if it exists.
+    api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
+    # Generate a random secret key for the test app
+    # overwriting the one set by the jwt function.
+    app.config['SECRET_KEY'] = os.urandom(16)
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     return app
