@@ -3,9 +3,9 @@ from tests.api import get_or_create_user
 
 def test_create_user(test_client):
     response = test_client.post(
-        '/api/user', json={"username": "testuser", "password": "testpassword"})
+        '/api/user', json={"username": "test_create_user", "password": "testpassword"})
     assert response.status_code == 201
-    assert response.get_json()["username"] == "testuser"
+    assert response.get_json()["username"] == "test_create_user"
 
 
 def test_create_user_missing_fields(test_client):

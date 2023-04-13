@@ -135,6 +135,7 @@ def create_note(post_id):
     return jsonify({"message": "Note created successfully", "note_id": note.id}), 201
 
 
+@jwt_exempt
 @bp.route('/user', methods=['POST'])
 def create_user():
     data = request.get_json()
