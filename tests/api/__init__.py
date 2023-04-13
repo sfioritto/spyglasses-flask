@@ -13,7 +13,7 @@ class CustomTestClient(FlaskClient):
         self.access_token = None
         super(CustomTestClient, self).__init__(*args, **kwargs)
 
-    def login(self, username, password):
+    def create_user_and_login(self, username=test_username, password=test_password):
         get_or_create_user(username, password)
         response = self.post('/api/login', json={
             'username': username,
