@@ -3,6 +3,7 @@ import importlib
 import pkgutil
 from flask import Flask
 from flask_cors import CORS
+from flask_jwt_extended import JWTManager
 
 
 def make_app():
@@ -52,10 +53,22 @@ def init_db(app):
         db.create_all()
 
 
+def jwt(app):
+    secret_key = os.environ.get('SECRET_KEY', None)
+    app.config['SECRET_KEY'] = secret_key
+    app.config['JWT_TOKEN_LOCATION'] = ['headers']
+    app.config['JWT_HEADER_NAME'] = 'Authorization'
+    app.config['JWT_HEADER_TYPE'] = 'Bearer'
+    JWTManager(app)
+
+
 def create_test_app():
     # Use the environment variable SPYGLASSES_API_VERSION, if it exists.
     api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
     app = make_app()
+    jwt(app)
+    # Generate a random secret key for the test app
+    # overwriting the one set by the jwt function.
     app.config['SECRET_KEY'] = os.urandom(16)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     register_views(app)
@@ -65,10 +78,9 @@ def create_test_app():
 
 
 def create_app():
-    secret_key = os.environ.get('SECRET_KEY', None)
     app = make_app()
-    app.config['SECRET_KEY'] = secret_key
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spyglasses.db'
+    jwt(app)
     register_views(app)
     register_api(app)
     init_db(app)

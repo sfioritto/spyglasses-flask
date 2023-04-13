@@ -1,8 +1,8 @@
 import pytest
-from flask import json
+from flask import Flask
 from spyglasses import create_test_app
 from spyglasses.models import db
-from tests.api import get_or_create_user
+from tests.api import get_or_create_user, CustomTestClient, test_username, test_password
 
 
 @pytest.fixture
@@ -12,7 +12,10 @@ def client():
     app_context.push()
     db.create_all()
 
-    yield app.test_client()
+    Flask.test_client_class = CustomTestClient
+    with app.test_client() as client:
+        client.login(test_username, test_password)
+        yield client
 
     db.session.remove()
     db.drop_all()
@@ -40,7 +43,7 @@ def test_get_user(client):
 
 
 def test_get_user_not_found(client):
-    response = client.get('/api/user/1')
+    response = client.get('/api/user/200')
     assert response.status_code == 404
 
 
@@ -69,5 +72,5 @@ def test_delete_user(client):
 
 
 def test_delete_user_not_found(client):
-    response = client.delete('/api/user/1')
+    response = client.delete('/api/user/200')
     assert response.status_code == 404

@@ -1,9 +1,29 @@
-from flask import jsonify, request, Blueprint
+from functools import wraps
+from flask_jwt_extended import jwt_required
+from flask import jsonify, request, Blueprint, current_app
 from flask_jwt_extended import create_access_token
 from spyglasses.models import Post, Note, User, db
 from werkzeug.security import generate_password_hash, check_password_hash
 
 bp = Blueprint("v1", __name__)
+
+
+def jwt_exempt(f):
+    f._jwt_exempt = True
+    return f
+
+
+@bp.before_request
+def require_jwt_for_all_routes():
+    # Get the current route function
+    route_func = current_app.view_functions.get(request.endpoint)
+
+    if route_func and not getattr(route_func, '_jwt_exempt', False):
+        @wraps(require_jwt_for_all_routes)
+        def wrapper():
+            pass
+
+        jwt_required()(wrapper)()
 
 
 @bp.route('/posts', methods=['GET'])
@@ -161,7 +181,8 @@ def delete_user(user_id):
     return jsonify({"result": "User deleted"}), 200
 
 
-@bp.route('/api/login', methods=['POST'])
+@jwt_exempt
+@bp.route('/login', methods=['POST'])
 def create_token():
     data = request.get_json()
     username = data.get('username')

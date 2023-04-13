@@ -1,8 +1,9 @@
 import json
 import pytest
+from flask import Flask
 from spyglasses import create_test_app
 from spyglasses.models import db, Post
-from tests.api import get_or_create_user, create_post
+from tests.api import create_post, CustomTestClient, test_password, test_username
 
 
 @pytest.fixture
@@ -21,7 +22,10 @@ def client():
     db.session.add_all([post1, post2])
     db.session.commit()
 
-    yield app.test_client()
+    Flask.test_client_class = CustomTestClient
+    with app.test_client() as client:
+        client.login(test_username, test_password)
+        yield client
 
     db.session.remove()
     db.drop_all()
