@@ -21,30 +21,30 @@ def test_get_posts(test_client, user):
         assert 'updated_at' in post
 
 
-# def test_create_post(test_client):
-#     # Test creating a post with valid data
-#     data = {
-#         'content': 'This is a test post.',
-#         'post_type': 'public'
-#     }
-#     response = test_client.post(
-#         '/api/posts', data=json.dumps(data), content_type='application/json')
-#     assert response.status_code == 201
-#     response_data = json.loads(response.data)
-#     assert 'post_id' in response_data
-#     assert 'message' in response_data
-#     assert response_data['message'] == 'Post created successfully'
+def test_create_post(test_client):
+    # Test creating a post with valid data
+    data = {
+        'content': 'This is a test post.',
+        'post_type': 'public'
+    }
+    response = test_client.post(
+        '/api/posts', data=json.dumps(data), content_type='application/json')
+    assert response.status_code == 201
+    response_data = json.loads(response.data)
+    assert 'post_id' in response_data
+    assert 'message' in response_data
+    assert response_data['message'] == 'Post created successfully'
 
-#     # Test creating a post with missing data
-#     data = {
-#         'content': 'This is another test post.'
-#     }
-#     response = test_client.post(
-#         '/api/posts', data=json.dumps(data), content_type='application/json')
-#     assert response.status_code == 400
-#     response_data = json.loads(response.data)
-#     assert 'error' in response_data
-#     assert response_data['error'] == 'Missing content or post_type in request data'
+    # Test creating a post with missing data
+    data = {
+        'content': 'This is another test post.'
+    }
+    response = test_client.post(
+        '/api/posts', data=json.dumps(data), content_type='application/json')
+    assert response.status_code == 400
+    response_data = json.loads(response.data)
+    assert 'error' in response_data
+    assert response_data['error'] == 'Missing content or post_type in request data'
 
 
 def test_get_post(test_client):
