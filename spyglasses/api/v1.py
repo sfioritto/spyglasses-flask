@@ -13,6 +13,10 @@ def jwt_exempt(f):
     return f
 
 
+# TODO:
+# some day figure out how to refactor this out of the
+# v1.py file and into a separate file so that when I create
+# a new version of the API, I don't have to copy and paste
 @bp.before_request
 def load_current_user():
     try:
