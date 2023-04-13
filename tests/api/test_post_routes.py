@@ -6,35 +6,12 @@ from spyglasses.models import db, Post
 from tests.api import create_post, CustomTestClient
 
 
-@pytest.fixture
-def client():
-    app = create_test_app()
-    app_context = app.app_context()
-    app_context.push()
-    db.create_all()
-
-    # Create sample data
-    post1 = create_post(content="Test post 1 content",
-                        blurb="Test post 1 blurb", post_type="text")
-
-    post2 = create_post(content="Test post 2 content",
-                        blurb="Test post 2 blurb", post_type="text")
-    db.session.add_all([post1, post2])
-    db.session.commit()
-
-    Flask.test_client_class = CustomTestClient
-    with app.test_client() as client:
-        client.create_user_and_login()
-
-    yield client
-
-    db.session.remove()
-    db.drop_all()
-    app_context.pop()
-
-
-def test_get_posts(client):
-    response = client.get('/api/posts')
+def test_get_posts(test_client, user):
+    test_client.post(
+        '/api/posts', json={'content': 'Test content', 'post_type': 'public'})
+    test_client.post(
+        '/api/posts', json={'content': 'Test content 2', 'post_type': 'public'})
+    response = test_client.get('/api/posts')
     assert response.status_code == 200
     data = response.json
     assert len(data) == 2
@@ -47,13 +24,13 @@ def test_get_posts(client):
         assert 'updated_at' in post
 
 
-# def test_create_post(client):
+# def test_create_post(test_client):
 #     # Test creating a post with valid data
 #     data = {
 #         'content': 'This is a test post.',
 #         'post_type': 'public'
 #     }
-#     response = client.post(
+#     response = test_client.post(
 #         '/api/posts', data=json.dumps(data), content_type='application/json')
 #     assert response.status_code == 201
 #     response_data = json.loads(response.data)
@@ -65,7 +42,7 @@ def test_get_posts(client):
 #     data = {
 #         'content': 'This is another test post.'
 #     }
-#     response = client.post(
+#     response = test_client.post(
 #         '/api/posts', data=json.dumps(data), content_type='application/json')
 #     assert response.status_code == 400
 #     response_data = json.loads(response.data)
@@ -73,27 +50,27 @@ def test_get_posts(client):
 #     assert response_data['error'] == 'Missing content or post_type in request data'
 
 
-def test_get_post(client):
+def test_get_post(test_client):
     post = create_post(content='Test content', post_type='public')
 
-    response = client.get(f'/api/posts/{post.id}')
+    response = test_client.get(f'/api/posts/{post.id}')
     assert response.status_code == 200
     response_data = json.loads(response.data)
     assert response_data['content'] == 'Test content'
     assert response_data['post_type'] == 'public'
 
-    response = client.get('/api/posts/9999')
+    response = test_client.get('/api/posts/9999')
     assert response.status_code == 404
 
 
-def test_update_post(client):
+def test_update_post(test_client):
     post = create_post(content='Test content', post_type='public')
     updated_data = {
         "blurb": "Updated blurb",
         "content": "Updated content",
         "post_type": "article"
     }
-    response = client.put(f'/api/posts/{post.id}', json=updated_data)
+    response = test_client.put(f'/api/posts/{post.id}', json=updated_data)
     json_data = response.get_json()
 
     assert response.status_code == 200
@@ -102,9 +79,9 @@ def test_update_post(client):
     assert json_data["post_type"] == updated_data["post_type"]
 
 
-def test_delete_post(client):
+def test_delete_post(test_client):
     post = create_post(content='Test content', post_type='public')
-    response = client.delete(f'/api/posts/{post.id}')
+    response = test_client.delete(f'/api/posts/{post.id}')
     deleted_post = Post.query.get(post.id)
     json_data = response.get_json()
 
@@ -113,10 +90,10 @@ def test_delete_post(client):
     assert json_data["message"] == "Post deleted"
 
 
-def test_create_note(client):
+def test_create_note(test_client):
     post = create_post(content='Test content', post_type='public')
     note_data = {"content": "This is a sample note content."}
-    response = client.post(f'/api/posts/{post.id}/notes', json=note_data)
+    response = test_client.post(f'/api/posts/{post.id}/notes', json=note_data)
     json_data = response.get_json()
 
     assert response.status_code == 201

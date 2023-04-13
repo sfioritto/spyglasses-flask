@@ -1,7 +1,7 @@
 from functools import wraps
 from flask_jwt_extended import jwt_required
-from flask import jsonify, request, Blueprint, current_app
-from flask_jwt_extended import create_access_token
+from flask import g, jsonify, request, Blueprint, current_app
+from flask_jwt_extended import create_access_token, verify_jwt_in_request, get_jwt_identity
 from spyglasses.models import Post, Note, User, db
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -11,6 +11,23 @@ bp = Blueprint("v1", __name__)
 def jwt_exempt(f):
     f._jwt_exempt = True
     return f
+
+
+@bp.before_request
+def load_current_user():
+    try:
+        # Check if JWT exists and is valid
+        verify_jwt_in_request()
+        # Get the current user's identity
+        current_user_identity = get_jwt_identity()
+        # Fetch the user from your database, e.g., using user ID or username
+        # Replace 'User' with your user model
+        current_user = User.query.get(current_user_identity)
+        # Store the user in the 'g' object
+        g.user = current_user
+    except Exception as e:
+        # If there's no JWT or it's invalid, set current_user to None
+        g.user = None
 
 
 @bp.before_request
@@ -50,10 +67,8 @@ def create_post():
     if not data or 'content' not in data or 'post_type' not in data:
         return jsonify({"error": "Missing content or post_type in request data"}), 400
 
-    # todo: need to get current user here from request maybe?
-    # need to figure out how I'm getting the user from the request
-    # using Json web tokens
-    post = Post(content=data['content'], post_type=data['post_type'])
+    kwargs = {**data, 'user_id': g.user.id}
+    post = Post(**kwargs)
 
     if 'blurb' in data:
         post.blurb = data['blurb']
