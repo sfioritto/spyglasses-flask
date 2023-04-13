@@ -1,9 +1,14 @@
+import gzip
 from functools import wraps
+from io import BytesIO
 from flask_jwt_extended import jwt_required
 from flask import g, jsonify, request, Blueprint, current_app
 from flask_jwt_extended import create_access_token, verify_jwt_in_request, get_jwt_identity
-from spyglasses.models import Post, Note, User, db
 from werkzeug.security import generate_password_hash, check_password_hash
+from newspaper import Article
+from datetime import datetime
+from spyglasses.models import Post, Note, User, db
+
 
 bp = Blueprint("v1", __name__)
 
@@ -45,6 +50,38 @@ def require_jwt_for_all_routes():
             pass
 
         jwt_required()(wrapper)()
+
+
+@jwt_exempt
+@bp.route('/articles', methods=['POST'])
+def save_article():
+    # Get the gzipped article text from the request
+    gzipped_article_text = request.data
+
+    # Decompress the gzipped article text
+    with gzip.open(BytesIO(gzipped_article_text), 'rt', encoding='utf-8') as f:
+        article_text = f.read()
+
+    # Parse the article using newspaper3k
+    article = Article('')
+    article.set_html(article_text)
+    article.parse()
+
+    # Create a new Post instance with the parsed data
+    post = Post(
+        blurb=article.title,
+        content=article.text,
+        post_type='article',
+        created_at=datetime.utcnow(),
+        user_id=1
+    )
+
+    # Save the Post instance to the database
+    db.session.add(post)
+    db.session.commit()
+
+    # Return the saved Post data as JSON
+    return jsonify(post.to_dict())
 
 
 @bp.route('/posts', methods=['GET'])

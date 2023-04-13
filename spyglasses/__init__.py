@@ -59,7 +59,7 @@ def jwt(app):
 def create_app(api_version=None):
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spyglasses.db'
-    CORS(app)
+    CORS(app, resources={r"/api/v1/articles": {"origins": "*"}})
     jwt(app)
     register_views(app)
     register_api(app, api_version)
