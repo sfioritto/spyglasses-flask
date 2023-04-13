@@ -6,12 +6,6 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
 
-def make_app():
-    app = Flask(__name__)
-    CORS(app)
-    return app
-
-
 def register_api(app, api_version=None):
     # If the api_version is specified, then
     # only register that version of the API.
@@ -63,8 +57,9 @@ def jwt(app):
 
 
 def create_app(api_version=None):
-    app = make_app()
+    app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spyglasses.db'
+    CORS(app)
     jwt(app)
     register_views(app)
     register_api(app, api_version)
