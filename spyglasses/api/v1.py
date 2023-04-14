@@ -52,7 +52,6 @@ def require_jwt_for_all_routes():
         jwt_required()(wrapper)()
 
 
-@jwt_exempt
 @bp.route('/articles', methods=['POST'])
 def save_article():
     # Get the gzipped article text from the request

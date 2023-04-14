@@ -1,3 +1,4 @@
+from werkzeug.security import generate_password_hash
 import os
 import importlib
 import pkgutil
@@ -41,10 +42,21 @@ def register_views(app):
 
 
 def init_db(app):
-    from spyglasses.models import db
+    from spyglasses.models import db, User
     db.init_app(app)
     with app.app_context():
         db.create_all()
+
+        # Check if the SPYGLASSES_ENVIRONMENT is true and create a dev user
+        if os.environ.get('SPYGLASSES_ENVIRONMENT', None) == 'DEVELOPMENT':
+            dev_user = User.query.filter_by(username='dev').first()
+
+            # If the dev user does not exist, create one
+            if dev_user is None:
+                dev_user = User(
+                    username='dev', password=generate_password_hash('test'))
+                db.session.add(dev_user)
+                db.session.commit()
 
 
 def jwt(app):
