@@ -1,4 +1,5 @@
 import gzip
+import hashlib
 from functools import wraps
 from io import BytesIO
 from flask_jwt_extended import jwt_required
@@ -52,6 +53,23 @@ def require_jwt_for_all_routes():
         jwt_required()(wrapper)()
 
 
+@jwt_exempt
+@bp.route('/login', methods=['POST'])
+def create_token():
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    if not username or not password:
+        return jsonify({"msg": "Missing username or password"}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user or not check_password_hash(user.password, password):
+        return jsonify({"msg": "Invalid username or password"}), 401
+
+    access_token = create_access_token(identity=user.id)
+    return jsonify({"access_token": access_token}), 200
+
+
 @bp.route('/articles', methods=['POST'])
 def save_article():
     # Get the gzipped article text from the request
@@ -66,13 +84,24 @@ def save_article():
     article.set_html(article_text)
     article.parse()
 
+    # Create a hash of the parsed article text
+    article_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+
+    # Check if a Post with the same hash already exists
+    existing_post = Post.query.filter_by(article_hash=article_hash).first()
+
+    if existing_post:
+        # Return the existing Post data as JSON
+        return jsonify(existing_post.to_dict())
+
     # Create a new Post instance with the parsed data
     post = Post(
         blurb=article.title,
         content=article.text,
         post_type='article',
         created_at=datetime.utcnow(),
-        user_id=1
+        user_id=1,
+        article_hash=article_hash
     )
 
     # Save the Post instance to the database
@@ -235,20 +264,3 @@ def delete_user(user_id):
     db.session.commit()
 
     return jsonify({"result": "User deleted"}), 200
-
-
-@jwt_exempt
-@bp.route('/login', methods=['POST'])
-def create_token():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    if not username or not password:
-        return jsonify({"msg": "Missing username or password"}), 400
-
-    user = User.query.filter_by(username=username).first()
-    if not user or not check_password_hash(user.password, password):
-        return jsonify({"msg": "Invalid username or password"}), 401
-
-    access_token = create_access_token(identity=user.id)
-    return jsonify({"access_token": access_token}), 200
