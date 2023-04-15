@@ -29,7 +29,7 @@ class Post(db.Model, SerializerMixin):
     highlights = db.relationship('Highlight', backref='post', lazy=True)
     notes = db.relationship('Note', backref='post', lazy=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    article_hash = db.Column(db.String(64), nullable=False, unique=True)
+    content_hash = db.Column(db.String(64), nullable=False, unique=True)
 
 
 class Highlight(db.Model, SerializerMixin):
@@ -50,13 +50,13 @@ class Note(db.Model, SerializerMixin):
 
 
 @event.listens_for(Post.content, 'set')
-def update_article_hash(target, value, *args):
+def update_content_hash(target, value, *args):
     """
-    Update the article_hash property whenever the content property is set.
+    Update the content_hash property whenever the content property is set.
     """
     # Create a hash of the parsed article text
     content_hash = hashlib.sha256(value.encode('utf-8')).hexdigest()
-    target.article_hash = content_hash
+    target.content_hash = content_hash
 
     # Flush the session to make the changes persistent
     session = object_session(target)

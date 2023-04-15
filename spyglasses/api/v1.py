@@ -112,7 +112,7 @@ def save_article():
         print('Article is valid')
 
         # Check if a Post with the same hash already exists
-        existing_post = Post.query.filter_by(article_hash=article_hash).first()
+        existing_post = Post.query.filter_by(content_hash=content_hash).first()
 
         if existing_post:
             print('Post already exists')
