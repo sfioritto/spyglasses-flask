@@ -1,6 +1,5 @@
 from flask import make_response
 import gzip
-import hashlib
 from functools import wraps
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint, current_app, make_response
@@ -85,8 +84,6 @@ def create_token():
         max_age=30 * 24 * 60 * 60,  # 1 month in seconds
     )
 
-    print(response.headers)
-
     return response, 200
 
 
@@ -111,33 +108,34 @@ def save_article():
     article = Article('')
     article.set_html(article_text)
     article.parse()
+    if article.is_valid_body():
+        print('Article is valid')
 
-    # Create a hash of the parsed article text
-    article_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+        # Check if a Post with the same hash already exists
+        existing_post = Post.query.filter_by(article_hash=article_hash).first()
 
-    # Check if a Post with the same hash already exists
-    existing_post = Post.query.filter_by(article_hash=article_hash).first()
+        if existing_post:
+            print('Post already exists')
+            # Return the existing Post data as JSON
+            return jsonify(existing_post.to_dict())
 
-    if existing_post:
-        # Return the existing Post data as JSON
-        return jsonify(existing_post.to_dict())
+        # Create a new Post instance with the parsed data
+        post = Post(
+            blurb=article.title,
+            content=article.text,
+            post_type='article',
+            created_at=datetime.utcnow(),
+            user_id=1,
+        )
 
-    # Create a new Post instance with the parsed data
-    post = Post(
-        blurb=article.title,
-        content=article.text,
-        post_type='article',
-        created_at=datetime.utcnow(),
-        user_id=1,
-        article_hash=article_hash
-    )
+        # Save the Post instance to the database
+        db.session.add(post)
+        db.session.commit()
 
-    # Save the Post instance to the database
-    db.session.add(post)
-    db.session.commit()
-
-    # Return the saved Post data as JSON
-    return jsonify(post.to_dict())
+        # Return the saved Post data as JSON
+        return jsonify(post.to_dict())
+    else:
+        return jsonify({"error": "Not an article"}), 400
 
 
 @bp.route('/posts', methods=['GET'])

@@ -1,7 +1,9 @@
+import hashlib
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
-
+from sqlalchemy import event
+from sqlalchemy.orm import object_session
 db = SQLAlchemy()
 
 
@@ -45,3 +47,18 @@ class Note(db.Model, SerializerMixin):
     highlight_id = db.Column(
         db.Integer, db.ForeignKey('highlight.id'), nullable=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=True)
+
+
+@event.listens_for(Post.content, 'set')
+def update_article_hash(target, value, *args):
+    """
+    Update the article_hash property whenever the content property is set.
+    """
+    # Create a hash of the parsed article text
+    content_hash = hashlib.sha256(value.encode('utf-8')).hexdigest()
+    target.article_hash = content_hash
+
+    # Flush the session to make the changes persistent
+    session = object_session(target)
+    if session:
+        session.flush()
