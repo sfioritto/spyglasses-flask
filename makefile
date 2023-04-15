@@ -31,3 +31,7 @@ test:
 dev:
 	@echo "Running Spyglasses"
 	SPYGLASSES_ENVIRONMENT=DEVELOPMENT SECRET_KEY=\x94BA\xed\x1a\x1e\x8d\xbf\xc9\xdb\xa4\x0e\x0e\xc0\xb6\xf9 flask --app spyglasses run --debug --port 8000
+
+db_console:
+	@echo "Connecting to the database"
+	sqlite3 ./instance/spyglasses.db
