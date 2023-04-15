@@ -1,5 +1,3 @@
-import string
-import random
 from spyglasses.models import User, Post, db
 from flask.testing import FlaskClient
 from werkzeug.security import generate_password_hash
