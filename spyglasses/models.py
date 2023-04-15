@@ -1,5 +1,6 @@
 import hashlib
 from datetime import datetime
+from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy import event
@@ -49,16 +50,42 @@ class Note(db.Model, SerializerMixin):
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=True)
 
 
+def generate_hash(content):
+    return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
+
 @event.listens_for(Post.content, 'set')
 def update_content_hash(target, value, *args):
     """
     Update the content_hash property whenever the content property is set.
     """
-    # Create a hash of the parsed article text
-    content_hash = hashlib.sha256(value.encode('utf-8')).hexdigest()
-    target.content_hash = content_hash
+    target.content_hash = generate_hash(value)
 
     # Flush the session to make the changes persistent
     session = object_session(target)
     if session:
         session.flush()
+
+
+@event.listens_for(db.session, 'before_flush')
+def check_content_hash_exists(session, flush_context, instances):
+    """
+    Check if the content_hash column already exists before creating a new Post instance.
+    If it exists, update the existing post instead of creating a new one.
+    """
+    for target in session.new:
+        if not isinstance(target, Post):
+            continue
+
+        # Check if a Post instance with the same content_hash already exists in the database
+        content_hash = generate_hash(target.content)
+        existing_post = session.query(Post).filter_by(
+            content_hash=content_hash).first()
+
+        # If a Post instance with the same content_hash already exists, update it
+        if existing_post:
+            # Remove the new object from the session to prevent it from being inserted
+            session.expunge(target)
+        else:
+            # If no existing post, set the content_hash for the new post
+            target.content_hash = content_hash

@@ -111,14 +111,6 @@ def save_article():
     if article.is_valid_body():
         print('Article is valid')
 
-        # Check if a Post with the same hash already exists
-        existing_post = Post.query.filter_by(content_hash=content_hash).first()
-
-        if existing_post:
-            print('Post already exists')
-            # Return the existing Post data as JSON
-            return jsonify(existing_post.to_dict())
-
         # Create a new Post instance with the parsed data
         post = Post(
             blurb=article.title,
