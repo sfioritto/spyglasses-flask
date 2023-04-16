@@ -35,3 +35,29 @@ dev:
 db_console:
 	@echo "Connecting to the database"
 	sqlite3 ./instance/spyglasses.db
+
+
+.PHONY: api
+api:
+
+
+.PHONY: api\:login
+api\:login: TOKEN_URL=http://127.0.0.1:8000/api/login
+api\:login:
+	curl -X POST \
+	  $(TOKEN_URL) \
+	  -H 'Content-Type: application/json' \
+	  -d '{ \
+	    "username": "dev", \
+	    "password": "test" \
+	}' -c /tmp/cookies.txt
+
+
+
+.PHONY: api\:refresh-token
+api\:refresh-token: TOKEN_URL=http://127.0.0.1:8000/api/token/refresh
+api\:refresh-token:
+	curl -X POST \
+	  $(TOKEN_URL) \
+	  -H 'Content-Type: application/json' \
+	  -b /tmp/cookies.txt
