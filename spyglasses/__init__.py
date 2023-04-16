@@ -1,10 +1,11 @@
-from werkzeug.security import generate_password_hash
 import os
 import importlib
 import pkgutil
+from werkzeug.security import generate_password_hash
 from flask import Flask
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
+from datetime import timedelta
 
 
 def register_api(app, api_version=None):
@@ -62,9 +63,11 @@ def init_db(app):
 def jwt(app):
     secret_key = os.environ.get('SECRET_KEY', None)
     app.config['SECRET_KEY'] = secret_key
-    app.config['JWT_TOKEN_LOCATION'] = ['headers']
-    app.config['JWT_HEADER_NAME'] = 'Authorization'
-    app.config['JWT_HEADER_TYPE'] = 'Bearer'
+    app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+    app.config['JWT_COOKIE_CSRF_PROTECT'] = False
+    app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
+    app.config['JWT_REFRESH_COOKIE_PATH'] = '/api/token/refresh'
+    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     JWTManager(app)
 
 

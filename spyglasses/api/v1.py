@@ -10,6 +10,7 @@ from flask_jwt_extended import (
     jwt_required,
     create_refresh_token,
     get_jwt_identity,
+    set_refresh_cookies,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from newspaper import Article
@@ -76,17 +77,12 @@ def create_token():
     refresh_token = create_refresh_token(identity=user.id)
 
     response = make_response(jsonify({"access_token": access_token}))
-    response.set_cookie(
-        key="refresh_token",
-        value=refresh_token,
-        httponly=True,
-        samesite="Strict",
-        max_age=30 * 24 * 60 * 60,  # 1 month in seconds
-    )
+    set_refresh_cookies(response, refresh_token)
 
     return response, 200
 
 
+@jwt_exempt
 @bp.route('/token/refresh', methods=['POST'])
 @jwt_required(refresh=True)
 def refresh_token():
