@@ -42,6 +42,8 @@ def get_or_create_user(username=test_username, password=test_password):
 def create_post(**kwargs):
     if 'user' not in kwargs:
         kwargs['user'] = get_or_create_user()
+    if 'type' not in kwargs:
+        kwargs['type'] = 'public'
     post = Post(**kwargs)
     db.session.add(post)
     db.session.commit()
