@@ -104,15 +104,13 @@ def save_article():
     article.set_html(data['html'])
     article.parse()
     if article.is_valid_body():
-        print('Article is valid')
-
         # Create a new Post instance with the parsed data
         post = Post(
             blurb=article.title,
             content=article.text,
             type='external',
             url=data['url'],
-            user_id=1,
+            user=g.user
         )
 
         # Save the Post instance to the database

@@ -1,6 +1,69 @@
 import json
+import gzip
 from spyglasses.models import Post
 from tests.api import create_post
+from io import BytesIO
+from flask import url_for, current_app
+
+
+def test_save_article(test_client, user):
+    # Preparing a valid article data
+    valid_html = """<html><head><title>Ahmad Jamal, measured maestro of the jazz piano, dies at 92</title></head><body><article><p>For most jazz performers, a song is part of a performance. For Ahmad Jamal, each song was a performance. Over the course of a remarkable eight-decade career, Jamal, who passed away Sunday at the age of 92, created stellar recordings both as an ambitious youth and a sagely veteran.</p>
+
+<p>Jamal's death was confirmed by his daughter, Sumayah Jamal. He died Sunday afternoon in Ashley Falls, Mass., after a battle with prostate cancer.</p>
+
+<p>Jamal's influence and admirers spread far and wide in jazz. For instance, Miles Davis found enormous inspiration in his work: In his 1989 autobiography, Miles, the legendary trumpeter said that Jamal "knocked me out with his concept of space, his lightness of touch, his understatement, and the way he phrases notes and chords and passages." Miles went on to record Jamal's "New Rhumba" on his classic 1957 recording Miles Ahead.</p>
+
+<p>His contemporary admirers are just as fervent. Pianist Ethan Iverson, a founding member of the exceptionally popular trio The Bad Plus, said, "All of his pieces are theatrical and contained. In some ways the Bad Plus was an extension of his classic trio.</p>
+
+<p>Pianist Vijay Iyer was just as adamant. "His sense of time is that of a dancer, or a comedian. His left hand stays focused, and his right hand is always in motion, interacting with, leaning on, and shading the pulse.</p>
+
+<p>"He bends any song to his will, always open to the moment and always pushing the boundaries, willing to override whatever old chestnut he's playing in search of something profoundly alive."</p>
+
+<p>Jamal was born Frederick Russell Jones in Pittsburgh on July 2, 1930. When he was 3 years old, his uncle challenged him to duplicate what he was playing on the piano, and the youngster actually could. He began formal studies of the piano at the age of 7 and quickly took on an advanced curriculum. He told Eugene Holley Jr. of Wax Poetics in a 2018 interview, "I studied Art Tatum, Bach, Beethoven, Count Basie, John Kirby, and Nat Cole. I was studying Liszt. I had to know European and American classical music. My mother was rich in spirit, and she led me to another rich person: my teacher, Mary Cardwell Dawson, who started the first African-American opera company in the country."</p>
+
+<p>Jamal grew up in a Pittsburgh community that was rich in jazz history. His neighbors included the legendary pianists Earl Hines, Errol Garner and Mary Lou Williams. As a youth, Jamal delivered newspapers to the household of Billy Strayhorn. When Jamal began his professional career at the age of 14, Art Tatum, an early titan of the keyboard, proclaimed him "a coming great." During a tour stop in Detroit, Jamal, who was born to Baptist parents, converted to Islam and changed his name.</p>
+</article></body></html>"""
+    valid_data = {"html": valid_html, "url": "https://example.com/article"}
+
+    # Preparing an invalid article data
+    invalid_html = "<html><head><title>Test Title</title></head><body><p></p></body></html>"
+    invalid_data = {"html": invalid_html,
+                    "url": "https://example.com/invalid-article"}
+
+    # Compress valid article data
+    valid_request_data = BytesIO()
+    with gzip.open(valid_request_data, 'wt', encoding='utf-8') as f:
+        f.write(json.dumps(valid_data))
+    valid_request_data.seek(0)
+
+    # Compress invalid article data
+    invalid_request_data = BytesIO()
+    with gzip.open(invalid_request_data, 'wt', encoding='utf-8') as f:
+        f.write(json.dumps(invalid_data))
+    invalid_request_data.seek(0)
+
+    headers = {'Content-Encoding': 'gzip'}
+
+    # Test valid article
+    with test_client.application.app_context():
+        response = test_client.post(
+            '/api/articles', data=valid_request_data, headers=headers)
+        assert response.status_code == 200
+        response_json = json.loads(response.data)
+        assert response_json['blurb'] == "Ahmad Jamal, measured maestro of the jazz piano, dies at 92"
+        assert response_json['content'].startswith(
+            "For most jazz performers, a song is part of a performance.")
+        assert response_json['url'] == "https://example.com/article"
+        assert response_json['type'] == "external"
+        assert response_json['user']['id'] == user.id
+
+    # Test invalid article
+    response = test_client.post(
+        '/api/articles', data=invalid_request_data, headers=headers)
+    assert response.status_code == 400
+    response_json = json.loads(response.data)
+    assert response_json["error"] == "Not an article"
 
 
 def test_get_posts(test_client, user):
@@ -53,7 +116,6 @@ def test_get_post(test_client):
     response = test_client.get(f'/api/posts/{post.id}')
     assert response.status_code == 200
     response_data = json.loads(response.data)
-    print(response_data)
     assert response_data['content'] == 'Test content'
     assert response_data['type'] == 'public'
 
