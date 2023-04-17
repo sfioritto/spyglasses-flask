@@ -111,7 +111,7 @@ def save_article():
         post = Post(
             blurb=article.title,
             content=article.text,
-            post_type='article',
+            type='external',
             created_at=datetime.utcnow(),
             user_id=1,
         )
@@ -132,13 +132,8 @@ def get_posts():
     post_list = []
 
     for post in posts:
-        post_data = {
-            'id': post.id,
-            'blurb': post.blurb,
-            'post_type': post.post_type,
-            'created_at': post.created_at,
-            'updated_at': post.updated_at,
-        }
+        post_data = post.to_dict()
+        del post_data['content']
         post_list.append(post_data)
 
     return jsonify(post_list)
@@ -147,8 +142,8 @@ def get_posts():
 @bp.route('/posts', methods=['POST'])
 def create_post():
     data = request.get_json()
-    if not data or 'content' not in data or 'post_type' not in data:
-        return jsonify({"error": "Missing content or post_type in request data"}), 400
+    if not data or 'content' not in data or 'type' not in data:
+        return jsonify({"error": "Missing content or type in request data"}), 400
 
     kwargs = {**data, 'user_id': g.user.id}
     post = Post(**kwargs)
@@ -177,12 +172,14 @@ def update_post(post_id):
         post.blurb = data["blurb"]
     if "content" in data:
         post.content = data["content"]
-    if "post_type" in data:
-        post.post_type = data["post_type"]
+    if "type" in data:
+        post.type = data["type"]
 
     db.session.commit()
 
-    return jsonify(post.to_dict())
+    serialized_post = post.to_dict()
+    serialized_post['content'] = post.content
+    return jsonify(serialized_post)
 
 
 @bp.route('/posts/<int:post_id>', methods=['DELETE'])

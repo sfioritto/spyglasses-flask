@@ -2,7 +2,7 @@ from spyglasses.models import Post, User, Note, db
 
 
 def test_get_notes(test_client, user):
-    post = Post(user=user, content="Test content", post_type="text")
+    post = Post(user=user, content="Test content", type="public")
     note1 = Note(content="Note 1", post=post)
     note2 = Note(content="Note 2", post=post)
     db.session.add_all([user, post, note1, note2])
@@ -19,7 +19,7 @@ def test_get_notes(test_client, user):
 def test_create_note(test_client):
     # Create a test user and post, and add them to the database
     user = User(username="testuser", password="testpassword")
-    post = Post(user=user, content="Test content", post_type="text")
+    post = Post(user=user, content="Test content", type="public")
     db.session.add_all([user, post])
     db.session.commit()
 

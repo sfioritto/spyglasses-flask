@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
-from sqlalchemy import event
+from sqlalchemy import event, Enum
 from sqlalchemy.orm import object_session
 db = SQLAlchemy()
 
@@ -17,12 +17,12 @@ class User(db.Model, SerializerMixin):
 
 
 class Post(db.Model, SerializerMixin):
-    serialize_only = ('id', 'blurb', 'content',
-                      'post_type', 'created_at', 'user.id')
+    serialize_only = ('id', 'title', 'blurb', 'created_at',
+                      'user.id', 'url', 'type', 'updated_at', 'content')
     id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(120), nullable=True)
     blurb = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=False)
-    post_type = db.Column(db.String(10), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False,
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False,
@@ -31,6 +31,9 @@ class Post(db.Model, SerializerMixin):
     notes = db.relationship('Note', backref='post', lazy=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     content_hash = db.Column(db.String(64), nullable=False, unique=True)
+    url = db.Column(db.String(2048), nullable=True, unique=True)
+    type = db.Column(db.Enum('public', 'private', 'external',
+                     name="PostTypes"), nullable=False)
 
 
 class Highlight(db.Model, SerializerMixin):

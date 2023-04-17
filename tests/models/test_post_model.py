@@ -12,7 +12,7 @@ def test_check_content_hash_exists(test_client):
     post1 = Post(
         blurb='Test Title 1',
         content='Test Content 1',
-        post_type='article',
+        type='external',
         created_at=datetime.utcnow(),
         user_id=1,
     )
@@ -23,7 +23,7 @@ def test_check_content_hash_exists(test_client):
     post2 = Post(
         blurb='Test Title 2',
         content='Test Content 1',
-        post_type='article',
+        type='external',
         created_at=datetime.utcnow(),
         user_id=1,
     )
