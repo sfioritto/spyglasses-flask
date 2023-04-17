@@ -1,5 +1,6 @@
-from flask import make_response
 import gzip
+import json
+from flask import make_response
 from functools import wraps
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint, current_app, make_response
@@ -93,16 +94,14 @@ def refresh_token():
 
 @bp.route('/articles', methods=['POST'])
 def save_article():
-    # Get the gzipped article text from the request
-    gzipped_article_text = request.data
+    # Decompress the gzipped request data
+    with gzip.open(BytesIO(request.data), 'rt', encoding='utf-8') as f:
+        request_data = f.read()
 
-    # Decompress the gzipped article text
-    with gzip.open(BytesIO(gzipped_article_text), 'rt', encoding='utf-8') as f:
-        article_text = f.read()
-
+    data = json.loads(request_data)
     # Parse the article using newspaper3k
     article = Article('')
-    article.set_html(article_text)
+    article.set_html(data['html'])
     article.parse()
     if article.is_valid_body():
         print('Article is valid')
@@ -112,7 +111,7 @@ def save_article():
             blurb=article.title,
             content=article.text,
             type='external',
-            created_at=datetime.utcnow(),
+            url=data['url'],
             user_id=1,
         )
 
