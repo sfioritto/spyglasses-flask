@@ -3,10 +3,9 @@ import json
 from flask import make_response
 from functools import wraps
 from io import BytesIO
-from flask import g, jsonify, request, Blueprint, current_app, make_response
+from flask import g, jsonify, request, Blueprint, make_response
 from flask_jwt_extended import (
     create_access_token,
-    verify_jwt_in_request,
     get_jwt_identity,
     jwt_required,
     create_refresh_token,
@@ -15,50 +14,14 @@ from flask_jwt_extended import (
 )
 from werkzeug.security import generate_password_hash, check_password_hash
 from newspaper import Article
-from datetime import datetime
 from spyglasses.models import Post, Note, User, db
+from spyglasses.api.jwt import jwt_exempt, load_current_user, require_jwt_for_all_routes
 
 
 bp = Blueprint("v1", __name__)
 
-
-def jwt_exempt(f):
-    f._jwt_exempt = True
-    return f
-
-
-# TODO:
-# some day figure out how to refactor this out of the
-# v1.py file and into a separate file so that when I create
-# a new version of the API, I don't have to copy and paste
-@bp.before_request
-def load_current_user():
-    try:
-        # Check if JWT exists and is valid
-        verify_jwt_in_request()
-        # Get the current user's identity
-        current_user_identity = get_jwt_identity()
-        # Fetch the user from your database, e.g., using user ID or username
-        # Replace 'User' with your user model
-        current_user = User.query.get(current_user_identity)
-        # Store the user in the 'g' object
-        g.user = current_user
-    except Exception as e:
-        # If there's no JWT or it's invalid, set current_user to None
-        g.user = None
-
-
-@bp.before_request
-def require_jwt_for_all_routes():
-    # Get the current route function
-    route_func = current_app.view_functions.get(request.endpoint)
-
-    if route_func and not getattr(route_func, '_jwt_exempt', False):
-        @wraps(require_jwt_for_all_routes)
-        def wrapper():
-            pass
-
-        jwt_required()(wrapper)()
+bp.before_request(load_current_user)
+bp.before_request(require_jwt_for_all_routes)
 
 
 @jwt_exempt

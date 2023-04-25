@@ -1,6 +1,5 @@
 import pkgutil
 import importlib
-from flask import Blueprint
 
 module_names = [module_name for _, module_name,
                 _ in pkgutil.iter_modules(__path__)]
