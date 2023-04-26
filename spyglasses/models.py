@@ -23,6 +23,7 @@ class Post(db.Model, SerializerMixin):
     title = db.Column(db.String(120), nullable=True)
     blurb = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=False)
+    document = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False,
                            default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False,

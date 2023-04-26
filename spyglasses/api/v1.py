@@ -1,4 +1,5 @@
 import gzip
+import base64
 import json
 from flask import make_response
 from functools import wraps
@@ -57,14 +58,17 @@ def refresh_token():
 
 @bp.route('/articles', methods=['POST'])
 def save_article():
-    # Decompress the gzipped request data
-    with gzip.open(BytesIO(request.data), 'rt', encoding='utf-8') as f:
-        request_data = f.read()
+    request_data = json.loads(request.data)
 
-    data = json.loads(request_data)
+    gzipped_document = base64.b64decode(request_data['document'])
+    with gzip.open(BytesIO(gzipped_document), 'rt', encoding='utf-8') as f:
+        document = f.read()
+
+    url = request_data['url']
+
     # Parse the article using newspaper3k
     article = Article('')
-    article.set_html(data['html'])
+    article.set_html(document)
     article.parse()
     if article.is_valid_body():
         # Create a new Post instance with the parsed data
@@ -72,7 +76,8 @@ def save_article():
             blurb=article.title,
             content=article.text,
             type='external',
-            url=data['url'],
+            document=document,
+            url=url,
             user=g.user
         )
 
