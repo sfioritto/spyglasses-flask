@@ -78,7 +78,8 @@ def save_article():
             type='external',
             document=document,
             url=url,
-            user=g.user
+            user=g.user,
+            title=article.title,
         )
 
         # Save the Post instance to the database
