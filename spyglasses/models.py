@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
 from sqlalchemy import event, or_
 from sqlalchemy.orm import object_session
+
 db = SQLAlchemy()
 
 
@@ -96,6 +97,7 @@ def check_post_exists(session, flush_context, instances):
             existing_post = session.query(Post).filter(
                 Post.content_hash == content_hash
             ).first()
+
         # If a Post instance with the same content_hash already exists, update it
         if existing_post:
             # Remove the new object from the session to prevent it from being inserted

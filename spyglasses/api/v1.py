@@ -2,7 +2,6 @@ import gzip
 import base64
 import json
 from flask import make_response
-from functools import wraps
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint, make_response
 from flask_jwt_extended import (
@@ -13,6 +12,7 @@ from flask_jwt_extended import (
     get_jwt_identity,
     set_refresh_cookies,
 )
+from html2text import html2text
 from werkzeug.security import generate_password_hash, check_password_hash
 from newspaper import Article
 from spyglasses.models import Post, Note, User, db
@@ -71,10 +71,11 @@ def save_article():
     article.set_html(document)
     article.parse()
     if article.is_valid_body():
+        markdown_content = html2text(article.text)
         # Create a new Post instance with the parsed data
         post = Post(
             blurb=article.title,
-            content=article.text,
+            content=markdown_content,
             type='external',
             document=document,
             url=url,
