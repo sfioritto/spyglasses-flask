@@ -1,3 +1,4 @@
+import base64
 import json
 import gzip
 from spyglasses.models import Post
@@ -5,10 +6,7 @@ from tests.api import create_post
 from io import BytesIO
 from flask import url_for, current_app
 
-
-def test_save_article(test_client, user):
-    # Preparing a valid article data
-    valid_html = """<html><head><title>Ahmad Jamal, measured maestro of the jazz piano, dies at 92</title></head><body><article><p>For most jazz performers, a song is part of a performance. For Ahmad Jamal, each song was a performance. Over the course of a remarkable eight-decade career, Jamal, who passed away Sunday at the age of 92, created stellar recordings both as an ambitious youth and a sagely veteran.</p>
+valid_html = """<html><head><title>Ahmad Jamal, measured maestro of the jazz piano, dies at 92</title></head><body><article><p>For most jazz performers, a song is part of a performance. For Ahmad Jamal, each song was a performance. Over the course of a remarkable eight-decade career, Jamal, who passed away Sunday at the age of 92, created stellar recordings both as an ambitious youth and a sagely veteran.</p>
 
 <p>Jamal's death was confirmed by his daughter, Sumayah Jamal. He died Sunday afternoon in Ashley Falls, Mass., after a battle with prostate cancer.</p>
 
@@ -24,31 +22,31 @@ def test_save_article(test_client, user):
 
 <p>Jamal grew up in a Pittsburgh community that was rich in jazz history. His neighbors included the legendary pianists Earl Hines, Errol Garner and Mary Lou Williams. As a youth, Jamal delivered newspapers to the household of Billy Strayhorn. When Jamal began his professional career at the age of 14, Art Tatum, an early titan of the keyboard, proclaimed him "a coming great." During a tour stop in Detroit, Jamal, who was born to Baptist parents, converted to Islam and changed his name.</p>
 </article></body></html>"""
-    valid_data = {"html": valid_html, "url": "https://example.com/article"}
+
+
+def test_save_article(test_client, user):
+    valid_html_bytes = valid_html.encode('utf-8')
+    valid_html_gzipped = gzip.compress(valid_html_bytes)
+    valid_html_gzipped_b64 = base64.b64encode(
+        valid_html_gzipped).decode('utf-8')
+    valid_data = {"document": valid_html_gzipped_b64,
+                  "url": "https://example.com/article"}
 
     # Preparing an invalid article data
     invalid_html = "<html><head><title>Test Title</title></head><body><p></p></body></html>"
-    invalid_data = {"html": invalid_html,
+    invalid_html_bytes = invalid_html.encode('utf-8')
+    invalid_html_gzipped = gzip.compress(invalid_html_bytes)
+    invalid_html_gzipped_b64 = base64.b64encode(
+        invalid_html_gzipped).decode('utf-8')
+    invalid_data = {"document": invalid_html_gzipped_b64,
                     "url": "https://example.com/invalid-article"}
 
-    # Compress valid article data
-    valid_request_data = BytesIO()
-    with gzip.open(valid_request_data, 'wt', encoding='utf-8') as f:
-        f.write(json.dumps(valid_data))
-    valid_request_data.seek(0)
-
-    # Compress invalid article data
-    invalid_request_data = BytesIO()
-    with gzip.open(invalid_request_data, 'wt', encoding='utf-8') as f:
-        f.write(json.dumps(invalid_data))
-    invalid_request_data.seek(0)
-
-    headers = {'Content-Encoding': 'gzip'}
+    headers = {'Content-Type': 'application/json'}
 
     # Test valid article
     with test_client.application.app_context():
         response = test_client.post(
-            '/api/articles', data=valid_request_data, headers=headers)
+            '/api/articles', data=json.dumps(valid_data), headers=headers)
         assert response.status_code == 200
         response_json = json.loads(response.data)
         assert response_json['blurb'] == "Ahmad Jamal, measured maestro of the jazz piano, dies at 92"
@@ -60,7 +58,7 @@ def test_save_article(test_client, user):
 
     # Test invalid article
     response = test_client.post(
-        '/api/articles', data=invalid_request_data, headers=headers)
+        '/api/articles', data=json.dumps(invalid_data), headers=headers)
     assert response.status_code == 400
     response_json = json.loads(response.data)
     assert response_json["error"] == "Not an article"
