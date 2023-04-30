@@ -43,9 +43,11 @@ def create_token():
 
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
-
     refresh_jti = get_jti(encoded_token=refresh_token)
+    access_jti = get_jti(encoded_token=access_token)
     refresh_token_record = Token(jti=refresh_jti, user_id=user.id)
+    access_token_record = Token(jti=access_jti, user_id=user.id)
+    db.session.add(access_token_record)
     db.session.add(refresh_token_record)
     db.session.commit()
 
@@ -256,16 +258,3 @@ def update_user(user_id):
     db.session.commit()
 
     return jsonify(user.to_dict()), 200
-
-
-@bp.route('/user/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
-    user = User.query.get(user_id)
-
-    if user is None:
-        return jsonify({"error": "User not found"}), 404
-
-    db.session.delete(user)
-    db.session.commit()
-
-    return jsonify({"result": "User deleted"}), 200

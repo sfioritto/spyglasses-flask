@@ -1,4 +1,5 @@
 import pytest
+from tests.api import get_or_create_user
 from spyglasses import create_test_app
 
 
@@ -12,6 +13,7 @@ def test_client():
 
 
 def test_login_logout(test_client):
+    user = get_or_create_user(username="dev", password="test")
     # test successful login
     response = test_client.post(
         '/api/login', json={"username": "dev", "password": "test"})

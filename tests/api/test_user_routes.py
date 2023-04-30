@@ -40,16 +40,3 @@ def test_update_user_nothing_to_update(test_client):
 
     response = test_client.put(f'/api/user/{user.id}', json={})
     assert response.status_code == 400
-
-
-def test_delete_user(test_client):
-    user = get_or_create_user()
-
-    response = test_client.delete(f'/api/user/{user.id}')
-    assert response.status_code == 200
-    assert response.get_json()["result"] == "User deleted"
-
-
-def test_delete_user_not_found(test_client):
-    response = test_client.delete('/api/user/200')
-    assert response.status_code == 404

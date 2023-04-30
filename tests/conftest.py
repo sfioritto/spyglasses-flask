@@ -23,7 +23,8 @@ def test_client():
     Flask.test_client_class = CustomTestClient
     with app.test_client() as client:
         client.create_user_and_login()
-        yield client
+
+    yield client
 
     db.session.remove()
     db.drop_all()

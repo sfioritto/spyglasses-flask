@@ -19,10 +19,8 @@ def load_current_user():
     try:
         # Check if JWT exists and is valid
         verify_jwt_in_request()
-
         # Get the JWT's unique identifier
         jti = get_jwt()['jti']
-
         # Check if the token is revoked
         token = Token.query.filter_by(jti=jti).first()
         if not token or token.is_revoked:
