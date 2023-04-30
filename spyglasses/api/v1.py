@@ -7,15 +7,18 @@ from flask import g, jsonify, request, Blueprint, make_response
 from flask_jwt_extended import (
     create_access_token,
     get_jwt_identity,
+    get_jti,
     jwt_required,
     create_refresh_token,
     get_jwt_identity,
     set_refresh_cookies,
+    unset_jwt_cookies,
+    get_jwt,
 )
 from html2text import html2text
 from werkzeug.security import generate_password_hash, check_password_hash
 from newspaper import Article
-from spyglasses.models import Post, Note, User, db
+from spyglasses.models import Post, Note, User, db, Token
 from spyglasses.api.jwt import jwt_exempt, load_current_user, require_jwt_for_all_routes
 
 
@@ -41,10 +44,34 @@ def create_token():
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
 
+    refresh_jti = get_jti(encoded_token=refresh_token)
+    refresh_token_record = Token(jti=refresh_jti, user_id=user.id)
+    db.session.add(refresh_token_record)
+    db.session.commit()
+
     response = make_response(jsonify({"access_token": access_token}))
     set_refresh_cookies(response, refresh_token)
 
     return response, 200
+
+
+@jwt_exempt
+@bp.route('/token/logout', methods=['POST'])
+@jwt_required(refresh=True)
+def logout():
+    jti = get_jwt()['jti']
+    try:
+        token = Token.query.filter_by(jti=jti).first()
+        if token:
+            token.is_revoked = True
+            db.session.commit()
+            response = jsonify({"msg": "Token has been revoked"})
+            unset_jwt_cookies(response)
+            return response, 200
+        else:
+            return jsonify({"msg": "Token not found"}), 400
+    except:
+        return jsonify({"msg": "An error occurred"}), 500
 
 
 @jwt_exempt

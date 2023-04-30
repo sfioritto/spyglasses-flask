@@ -1,11 +1,12 @@
 from functools import wraps
 from flask import request, g, current_app
-from spyglasses.models import User
+from spyglasses.models import User, Token
 from flask_jwt_extended import (
     verify_jwt_in_request,
     get_jwt_identity,
     jwt_required,
     get_jwt_identity,
+    get_jwt,
 )
 
 
@@ -18,11 +19,21 @@ def load_current_user():
     try:
         # Check if JWT exists and is valid
         verify_jwt_in_request()
+
+        # Get the JWT's unique identifier
+        jti = get_jwt()['jti']
+
+        # Check if the token is revoked
+        token = Token.query.filter_by(jti=jti).first()
+        if not token or token.is_revoked:
+            raise Exception('Token is revoked')
+
         # Get the current user's identity
         current_user_identity = get_jwt_identity()
+
         # Fetch the user from your database, e.g., using user ID or username
-        # Replace 'User' with your user model
         current_user = User.query.get(current_user_identity)
+
         # Store the user in the 'g' object
         g.user = current_user
     except Exception as e:

@@ -66,7 +66,7 @@ def jwt(app):
     app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
     app.config['JWT_COOKIE_CSRF_PROTECT'] = False
     app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
-    app.config['JWT_REFRESH_COOKIE_PATH'] = '/api/token/refresh'
+    app.config['JWT_REFRESH_COOKIE_PATH'] = '/api/token'
     app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
     JWTManager(app)
 
