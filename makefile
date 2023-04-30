@@ -47,7 +47,7 @@ api\:login:
 	  -d '{ \
 	    "username": "dev", \
 	    "password": "test" \
-	}' -c /tmp/cookies.txt
+	}' -c /tmp/cookies.txt | jq -r '.access_token' > /tmp/access_token.txt
 
 .PHONY: api\:logout
 api\:logout: LOGOUT_URL=http://127.0.0.1:8000/api/token/logout
@@ -64,3 +64,4 @@ api\:refresh-token:
 	  $(TOKEN_URL) \
 	  -H 'Content-Type: application/json' \
 	  -b /tmp/cookies.txt
+		

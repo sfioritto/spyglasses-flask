@@ -22,6 +22,8 @@ class Token(db.Model):
     jti = db.Column(db.String(36), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     is_revoked = db.Column(db.Boolean, nullable=False, default=False)
+    type = db.Column(db.Enum('access', 'refresh',
+                     name="TokenTypes"), nullable=False)
 
 
 class Post(db.Model, SerializerMixin):

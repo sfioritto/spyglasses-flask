@@ -1,5 +1,5 @@
 from functools import wraps
-from flask import request, g, current_app
+from flask import request, g, current_app, abort
 from spyglasses.models import User, Token
 from flask_jwt_extended import (
     verify_jwt_in_request,
@@ -35,8 +35,7 @@ def load_current_user():
         # Store the user in the 'g' object
         g.user = current_user
     except Exception as e:
-        # If there's no JWT or it's invalid, set current_user to None
-        g.user = None
+        abort(401, description="Unauthorized")
 
 
 def require_jwt_for_all_routes():

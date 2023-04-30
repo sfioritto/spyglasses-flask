@@ -1,7 +1,7 @@
 import gzip
 import base64
 import json
-from flask import make_response
+from flask import make_response, request
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint, make_response
 from flask_jwt_extended import (
@@ -21,10 +21,28 @@ from newspaper import Article
 from spyglasses.models import Post, Note, User, db, Token
 from spyglasses.api.jwt import jwt_exempt, load_current_user, require_jwt_for_all_routes
 
+API_VERSION = "v1"
+bp = Blueprint(API_VERSION, __name__)
 
-bp = Blueprint("v1", __name__)
 
-bp.before_request(load_current_user)
+def custom_load_current_user():
+    endpoint_names = [
+        'create_token',
+        'logout',
+        'refresh_token'
+    ]
+    blueprint_names = [API_VERSION, 'default']
+    skip_endpoints = []
+    for blueprint_name in blueprint_names:
+        for endpoint_name in endpoint_names:
+            skip_endpoints.append(f'{blueprint_name}.{endpoint_name}')
+
+    if request.endpoint in skip_endpoints:
+        return
+    load_current_user()
+
+
+bp.before_request(custom_load_current_user)
 bp.before_request(require_jwt_for_all_routes)
 
 
@@ -45,8 +63,9 @@ def create_token():
     refresh_token = create_refresh_token(identity=user.id)
     refresh_jti = get_jti(encoded_token=refresh_token)
     access_jti = get_jti(encoded_token=access_token)
-    refresh_token_record = Token(jti=refresh_jti, user_id=user.id)
-    access_token_record = Token(jti=access_jti, user_id=user.id)
+    refresh_token_record = Token(
+        jti=refresh_jti, user_id=user.id, type="refresh")
+    access_token_record = Token(jti=access_jti, user_id=user.id, type="access")
     db.session.add(access_token_record)
     db.session.add(refresh_token_record)
     db.session.commit()
@@ -61,17 +80,16 @@ def create_token():
 @bp.route('/token/logout', methods=['POST'])
 @jwt_required(refresh=True)
 def logout():
-    jti = get_jwt()['jti']
+    current_user_id = get_jwt_identity()
     try:
-        token = Token.query.filter_by(jti=jti).first()
-        if token:
+        tokens = Token.query.filter_by(user_id=current_user_id).all()
+        for token in tokens:
             token.is_revoked = True
-            db.session.commit()
-            response = jsonify({"msg": "Token has been revoked"})
-            unset_jwt_cookies(response)
-            return response, 200
-        else:
-            return jsonify({"msg": "Token not found"}), 400
+
+        db.session.commit()
+        response = jsonify({"msg": "Token has been revoked"})
+        unset_jwt_cookies(response)
+        return response, 200
     except:
         return jsonify({"msg": "An error occurred"}), 500
 
