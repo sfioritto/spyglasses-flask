@@ -17,6 +17,12 @@ def jwt_exempt(f):
 
 def load_current_user():
     try:
+        # Check if the request is a preflight request
+        # if you run verify_jwt_in_request() on a preflight request
+        # it will return None and cause the request to fail
+        if request.method == 'OPTIONS':
+            return
+
         # Check if JWT exists and is valid
         verify_jwt_in_request()
         # Get the JWT's unique identifier

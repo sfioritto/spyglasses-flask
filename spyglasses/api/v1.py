@@ -36,14 +36,13 @@ def custom_load_current_user():
     for blueprint_name in blueprint_names:
         for endpoint_name in endpoint_names:
             skip_endpoints.append(f'{blueprint_name}.{endpoint_name}')
-
     if request.endpoint in skip_endpoints:
         return
     load_current_user()
 
 
-bp.before_request(custom_load_current_user)
 bp.before_request(require_jwt_for_all_routes)
+bp.before_request(custom_load_current_user)
 
 
 @jwt_exempt
