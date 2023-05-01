@@ -1,18 +1,27 @@
 from functools import wraps
 from flask import request, g, current_app, abort
-from spyglasses.models import User, Token
+from spyglasses.models import User, Token, db
 from flask_jwt_extended import (
     verify_jwt_in_request,
     get_jwt_identity,
     jwt_required,
     get_jwt_identity,
     get_jwt,
+    unset_jwt_cookies,
 )
 
 
 def jwt_exempt(f):
     f._jwt_exempt = True
     return f
+
+
+def invalidate_all_tokens_for_user(current_user_id):
+    tokens = Token.query.filter_by(user_id=current_user_id).all()
+    for token in tokens:
+        token.is_revoked = True
+
+    db.session.commit()
 
 
 def load_current_user():

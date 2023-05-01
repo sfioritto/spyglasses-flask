@@ -13,13 +13,17 @@ from flask_jwt_extended import (
     get_jwt_identity,
     set_refresh_cookies,
     unset_jwt_cookies,
-    get_jwt,
 )
 from html2text import html2text
 from werkzeug.security import generate_password_hash, check_password_hash
 from newspaper import Article
 from spyglasses.models import Post, Note, User, db, Token
-from spyglasses.api.jwt import jwt_exempt, load_current_user, require_jwt_for_all_routes
+from spyglasses.api.jwt import (
+    jwt_exempt,
+    load_current_user,
+    require_jwt_for_all_routes,
+    invalidate_all_tokens_for_user
+)
 
 API_VERSION = "v1"
 bp = Blueprint(API_VERSION, __name__)
@@ -58,6 +62,8 @@ def create_token():
     if not user or not check_password_hash(user.password, password):
         return jsonify({"msg": "Invalid username or password"}), 401
 
+    invalidate_all_tokens_for_user(user.id)
+
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
     refresh_jti = get_jti(encoded_token=refresh_token)
@@ -81,11 +87,7 @@ def create_token():
 def logout():
     current_user_id = get_jwt_identity()
     try:
-        tokens = Token.query.filter_by(user_id=current_user_id).all()
-        for token in tokens:
-            token.is_revoked = True
-
-        db.session.commit()
+        invalidate_all_tokens_for_user(current_user_id)
         response = jsonify({"msg": "Token has been revoked"})
         unset_jwt_cookies(response)
         return response, 200
