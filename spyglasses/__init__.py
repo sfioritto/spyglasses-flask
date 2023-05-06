@@ -1,9 +1,12 @@
 import os
 import importlib
 import pkgutil
+from os import environ as env
 from werkzeug.security import generate_password_hash
 from flask import Flask
 from flask_cors import CORS
+from authlib.integrations.flask_client import OAuth
+from dotenv import find_dotenv, load_dotenv
 
 
 def register_api(app, api_version=None):
@@ -61,10 +64,30 @@ def init_db(app):
 def create_app(api_version=None):
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spyglasses.db'
+    app.secret_key = env.get("APP_SECRET_KEY")
     CORS(app, supports_credentials=True,
          origins='*',
          allow_headers=["Content-Type", "Content-Encoding", "Authorization"],
          methods=["GET", "HEAD", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"])
+
+    ENV_FILE = find_dotenv()
+    if ENV_FILE:
+        load_dotenv(ENV_FILE)
+
+    oauth = OAuth(app)
+
+    auth0 = oauth.register(
+        "auth0",
+        client_id=env.get("AUTH0_CLIENT_ID"),
+        client_secret=env.get("AUTH0_CLIENT_SECRET"),
+        client_kwargs={
+            "scope": "openid profile email",
+        },
+        server_metadata_url=f'https://{env.get("AUTH0_DOMAIN")}/.well-known/openid-configuration'
+    )
+
+    app.oauth = oauth
+    app.auth0 = auth0
 
     register_views(app)
     register_api(app, api_version)
@@ -73,9 +96,8 @@ def create_app(api_version=None):
 
 
 def create_test_app():
-    api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
-    app = create_app(api_version)
     # Use the environment variable SPYGLASSES_API_VERSION, if it exists.
     api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
+    app = create_app(api_version)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     return app
