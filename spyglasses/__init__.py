@@ -6,6 +6,7 @@ from flask import Flask
 from flask_cors import CORS
 from authlib.integrations.flask_client import OAuth
 from dotenv import find_dotenv, load_dotenv
+from flask_session import Session
 
 
 def register_api(app, api_version=None):
@@ -102,5 +103,7 @@ def create_test_app():
     # Use the environment variable SPYGLASSES_API_VERSION, if it exists.
     api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
     app = create_app(api_version)
+    app.config['SESSION_TYPE'] = 'filesystem'
+    Session(app)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     return app

@@ -5,10 +5,13 @@ from io import BytesIO
 from flask import g, jsonify, request, Blueprint
 from html2text import html2text
 from newspaper import Article
-from spyglasses.models import Post, Note, User, db
+from spyglasses.models import Post, Note, db
+from spyglasses.views import load_user
 
 API_VERSION = "v1"
 bp = Blueprint(API_VERSION, __name__)
+
+bp.before_request(load_user)
 
 
 @bp.route('/articles', methods=['POST'])

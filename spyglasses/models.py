@@ -9,7 +9,8 @@ db = SQLAlchemy()
 
 
 class User(db.Model, SerializerMixin):
-    serialize_only = ('id', 'auth_user_id', 'username')
+    serialize_only = ('id', 'auth_user_id', 'email',
+                      'given_name', 'family_name')
     email = db.Column(db.String(120), unique=True, nullable=False)
     given_name = db.Column(db.String(120), nullable=True)
     family_name = db.Column(db.String(120), nullable=True)

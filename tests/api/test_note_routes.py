@@ -1,4 +1,5 @@
 from spyglasses.models import Post, User, Note, db
+from tests.api import get_or_create_user
 
 
 def test_get_notes(test_client, user):
@@ -18,7 +19,7 @@ def test_get_notes(test_client, user):
 
 def test_create_note(test_client):
     # Create a test user and post, and add them to the database
-    user = User(username="testuser", password="testpassword")
+    user = get_or_create_user(auth_user_id="testuser")
     post = Post(user=user, content="Test content", type="public")
     db.session.add_all([user, post])
     db.session.commit()

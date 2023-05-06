@@ -3,8 +3,6 @@ import json
 import gzip
 from spyglasses.models import Post
 from tests.api import create_post
-from io import BytesIO
-from flask import url_for, current_app
 
 valid_html = """<html><head><title>Ahmad Jamal, measured maestro of the jazz piano, dies at 92</title></head><body><article><p>For most jazz performers, a song is part of a performance. For Ahmad Jamal, each song was a performance. Over the course of a remarkable eight-decade career, Jamal, who passed away Sunday at the age of 92, created stellar recordings both as an ambitious youth and a sagely veteran.</p>
 

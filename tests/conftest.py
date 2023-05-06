@@ -1,16 +1,6 @@
 import pytest
-from flask import Flask
 from spyglasses import create_test_app
 from spyglasses.models import db
-from tests.api import get_or_create_user
-
-
-@pytest.fixture
-def user():
-    user = get_or_create_user()
-    db.session.add(user)
-    db.session.commit()
-    return user
 
 
 @pytest.fixture
@@ -21,9 +11,8 @@ def test_client():
     db.create_all()
 
     with app.test_client() as client:
-        client.create_user_and_login()
-
-    yield client
+        with app.app_context():
+            yield client
 
     db.session.remove()
     db.drop_all()

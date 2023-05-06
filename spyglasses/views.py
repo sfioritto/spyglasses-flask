@@ -2,19 +2,22 @@ import json
 import requests
 from os import environ as env
 from urllib.parse import quote_plus, urlencode
-from flask import redirect, render_template, session, url_for, Blueprint, current_app
+from flask import redirect, render_template, session, url_for, Blueprint, current_app, abort, g
 from spyglasses.models import User, db
 
 
-def load_current_user():
-    # This will look at the token in the session cookie
-    # and try to load the user from the database
-    # if the token is valid otherwise it will
-    # redirect the user to the login page
-    pass
-
-
 bp = Blueprint("views", __name__)
+
+
+def load_user():
+    userinfo = session.get("user")
+    if not userinfo:
+        abort(401)
+    auth0_user_id = userinfo["sub"]
+    user = User.query.filter_by(auth_user_id=auth0_user_id).first()
+    if not user:
+        abort(401)
+    g.user = user
 
 
 @bp.route("/login")
