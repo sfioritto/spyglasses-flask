@@ -4,8 +4,6 @@ import pkgutil
 from werkzeug.security import generate_password_hash
 from flask import Flask
 from flask_cors import CORS
-from flask_jwt_extended import JWTManager
-from datetime import timedelta
 
 
 def register_api(app, api_version=None):
@@ -60,17 +58,6 @@ def init_db(app):
                 db.session.commit()
 
 
-def jwt(app):
-    secret_key = os.environ.get('SECRET_KEY', None)
-    app.config['SECRET_KEY'] = secret_key
-    app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
-    app.config['JWT_COOKIE_CSRF_PROTECT'] = False
-    app.config['JWT_ACCESS_COOKIE_PATH'] = '/api/'
-    app.config['JWT_REFRESH_COOKIE_PATH'] = '/api/token'
-    app.config['JWT_REFRESH_TOKEN_EXPIRES'] = timedelta(days=30)
-    JWTManager(app)
-
-
 def create_app(api_version=None):
     app = Flask(__name__)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///spyglasses.db'
@@ -79,7 +66,6 @@ def create_app(api_version=None):
          allow_headers=["Content-Type", "Content-Encoding", "Authorization"],
          methods=["GET", "HEAD", "POST", "OPTIONS", "PUT", "PATCH", "DELETE"])
 
-    jwt(app)
     register_views(app)
     register_api(app, api_version)
     init_db(app)
@@ -91,8 +77,5 @@ def create_test_app():
     app = create_app(api_version)
     # Use the environment variable SPYGLASSES_API_VERSION, if it exists.
     api_version = os.environ.get('SPYGLASSES_API_VERSION', None)
-    # Generate a random secret key for the test app
-    # overwriting the one set by the jwt function.
-    app.config['SECRET_KEY'] = os.urandom(16)
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
     return app

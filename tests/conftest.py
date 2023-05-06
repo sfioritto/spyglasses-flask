@@ -2,7 +2,7 @@ import pytest
 from flask import Flask
 from spyglasses import create_test_app
 from spyglasses.models import db
-from tests.api import get_or_create_user, CustomTestClient
+from tests.api import get_or_create_user
 
 
 @pytest.fixture
@@ -20,7 +20,6 @@ def test_client():
     app_context.push()
     db.create_all()
 
-    Flask.test_client_class = CustomTestClient
     with app.test_client() as client:
         client.create_user_and_login()
 

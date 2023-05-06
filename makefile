@@ -1,4 +1,4 @@
-.PHONY: test-api dev drop-db
+.PHONY: dev drop-db
 
 # This Makefile target, "test", iterates through all API versions found in the
 # ./spyglasses/api/ directory. For each version, it sets the SPYGLASSES_API_VERSION
@@ -34,34 +34,4 @@ dev:
 db_console:
 	@echo "Connecting to the database"
 	sqlite3 ./instance/spyglasses.db
-
-.PHONY: api
-api:
-
-.PHONY: api\:login
-api\:login: TOKEN_URL=http://127.0.0.1:8000/api/login
-api\:login:
-	curl -X POST \
-	  $(TOKEN_URL) \
-	  -H 'Content-Type: application/json' \
-	  -d '{ \
-	    "username": "dev", \
-	    "password": "test" \
-	}' -c /tmp/cookies.txt | jq -r '.access_token' > /tmp/access_token.txt
-
-.PHONY: api\:logout
-api\:logout: LOGOUT_URL=http://127.0.0.1:8000/api/token/logout
-api\:logout:
-	curl -X POST \
-	  $(LOGOUT_URL) \
-	  -H 'Content-Type: application/json' \
-	  -b /tmp/cookies.txt
-
-.PHONY: api\:refresh-token
-api\:refresh-token: TOKEN_URL=http://127.0.0.1:8000/api/token/refresh
-api\:refresh-token:
-	curl -X POST \
-	  $(TOKEN_URL) \
-	  -H 'Content-Type: application/json' \
-	  -b /tmp/cookies.txt
 		

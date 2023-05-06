@@ -1,107 +1,15 @@
 import gzip
 import base64
 import json
-from flask import make_response, request
 from io import BytesIO
-from flask import g, jsonify, request, Blueprint, make_response
-from flask_jwt_extended import (
-    create_access_token,
-    get_jwt_identity,
-    get_jti,
-    jwt_required,
-    create_refresh_token,
-    get_jwt_identity,
-    set_refresh_cookies,
-    unset_jwt_cookies,
-)
+from flask import g, jsonify, request, Blueprint
 from html2text import html2text
 from werkzeug.security import generate_password_hash, check_password_hash
 from newspaper import Article
-from spyglasses.models import Post, Note, User, db, Token
-from spyglasses.api.jwt import (
-    jwt_exempt,
-    load_current_user,
-    require_jwt_for_all_routes,
-    invalidate_all_tokens_for_user
-)
+from spyglasses.models import Post, Note, User, db
 
 API_VERSION = "v1"
 bp = Blueprint(API_VERSION, __name__)
-
-
-def custom_load_current_user():
-    endpoint_names = [
-        'create_token',
-        'logout',
-        'refresh_token'
-    ]
-    blueprint_names = [API_VERSION, 'default']
-    skip_endpoints = []
-    for blueprint_name in blueprint_names:
-        for endpoint_name in endpoint_names:
-            skip_endpoints.append(f'{blueprint_name}.{endpoint_name}')
-    if request.endpoint in skip_endpoints:
-        return
-    load_current_user()
-
-
-bp.before_request(require_jwt_for_all_routes)
-bp.before_request(custom_load_current_user)
-
-
-@jwt_exempt
-@bp.route('/login', methods=['POST'])
-def create_token():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-    if not username or not password:
-        return jsonify({"msg": "Missing username or password"}), 400
-
-    user = User.query.filter_by(username=username).first()
-    if not user or not check_password_hash(user.password, password):
-        return jsonify({"msg": "Invalid username or password"}), 401
-
-    invalidate_all_tokens_for_user(user.id)
-
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
-    refresh_jti = get_jti(encoded_token=refresh_token)
-    access_jti = get_jti(encoded_token=access_token)
-    refresh_token_record = Token(
-        jti=refresh_jti, user_id=user.id, type="refresh")
-    access_token_record = Token(jti=access_jti, user_id=user.id, type="access")
-    db.session.add(access_token_record)
-    db.session.add(refresh_token_record)
-    db.session.commit()
-
-    response = make_response(jsonify({"access_token": access_token}))
-    set_refresh_cookies(response, refresh_token)
-
-    return response, 200
-
-
-@jwt_exempt
-@bp.route('/token/logout', methods=['POST'])
-@jwt_required(refresh=True)
-def logout():
-    current_user_id = get_jwt_identity()
-    try:
-        invalidate_all_tokens_for_user(current_user_id)
-        response = jsonify({"msg": "Token has been revoked"})
-        unset_jwt_cookies(response)
-        return response, 200
-    except:
-        return jsonify({"msg": "An error occurred"}), 500
-
-
-@jwt_exempt
-@bp.route('/token/refresh', methods=['POST'])
-@jwt_required(refresh=True)
-def refresh_token():
-    current_user_id = get_jwt_identity()
-    access_token = create_access_token(identity=current_user_id)
-    return jsonify({"access_token": access_token}), 200
 
 
 @bp.route('/articles', methods=['POST'])
@@ -226,7 +134,6 @@ def create_note(post_id):
     return jsonify({"message": "Note created successfully", "note_id": note.id}), 201
 
 
-@jwt_exempt
 @bp.route('/user', methods=['POST'])
 def create_user():
     data = request.get_json()
