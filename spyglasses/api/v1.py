@@ -4,7 +4,6 @@ import json
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint
 from html2text import html2text
-from werkzeug.security import generate_password_hash, check_password_hash
 from newspaper import Article
 from spyglasses.models import Post, Note, User, db
 
@@ -132,55 +131,3 @@ def create_note(post_id):
     db.session.commit()
 
     return jsonify({"message": "Note created successfully", "note_id": note.id}), 201
-
-
-@bp.route('/user', methods=['POST'])
-def create_user():
-    data = request.get_json()
-    username = data.get('username')
-    password = data.get('password')
-
-    if not username or not password:
-        return jsonify({"error": "Missing username or password"}), 400
-
-    user = User.query.filter_by(username=username).first()
-    if user:
-        return jsonify({"msg": "Username already exists"}), 400
-
-    hashed_password = generate_password_hash(password)
-    new_user = User(username=username, password=hashed_password)
-    db.session.add(new_user)
-    db.session.commit()
-
-    return jsonify(new_user.to_dict()), 201
-
-
-@bp.route('/user/<int:user_id>', methods=['GET'])
-def get_user(user_id):
-    user = User.query.get(user_id)
-
-    if user is None:
-        return jsonify({"error": "User not found"}), 404
-
-    return jsonify(user.to_dict()), 200
-
-
-@bp.route('/user/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
-    user = User.query.get(user_id)
-
-    if user is None:
-        return jsonify({"error": "User not found"}), 404
-
-    data = request.get_json()
-    username = data.get('username')
-
-    if not username:
-        return jsonify({"error": "Nothing to update"}), 400
-
-    if username:
-        user.username = username
-
-    db.session.commit()
-
-    return jsonify(user.to_dict()), 200

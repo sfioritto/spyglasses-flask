@@ -2,7 +2,6 @@ import os
 import importlib
 import pkgutil
 from os import environ as env
-from werkzeug.security import generate_password_hash
 from flask import Flask
 from flask_cors import CORS
 from authlib.integrations.flask_client import OAuth
@@ -51,12 +50,16 @@ def init_db(app):
 
         # Check if the SPYGLASSES_ENVIRONMENT is true and create a dev user
         if os.environ.get('SPYGLASSES_ENVIRONMENT', None) == 'DEVELOPMENT':
-            dev_user = User.query.filter_by(username='dev').first()
+            dev_user = User.query.filter_by(auth_user_id='dev').first()
 
             # If the dev user does not exist, create one
             if dev_user is None:
                 dev_user = User(
-                    username='dev', password=generate_password_hash('test'))
+                    given_name='dev',
+                    family_name='developer',
+                    email='dev@test.com',
+                    auth_user_id='dev'
+                )
                 db.session.add(dev_user)
                 db.session.commit()
 
