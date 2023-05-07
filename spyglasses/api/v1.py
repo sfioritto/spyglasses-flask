@@ -1,12 +1,16 @@
+import asyncio
+import aiohttp
 import gzip
 import base64
 import json
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint
-from html2text import html2text
 from newspaper import Article
 from spyglasses.models import Post, Note, db
 from spyglasses.views import load_user
+import os
+import openai
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 API_VERSION = "v1"
 bp = Blueprint(API_VERSION, __name__)
@@ -15,7 +19,7 @@ bp.before_request(load_user)
 
 
 @bp.route('/articles', methods=['POST'])
-def save_article():
+async def save_article():
     request_data = json.loads(request.data)
 
     gzipped_document = base64.b64decode(request_data['document'])
@@ -24,16 +28,21 @@ def save_article():
 
     url = request_data['url']
 
-    # Parse the article using newspaper3k
     article = Article('')
     article.set_html(document)
     article.parse()
+
     if article.is_valid_body():
-        markdown_content = html2text(article.text)
-        # Create a new Post instance with the parsed data
+        completion = await openai.ChatCompletion.acreate(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "user", "content": f"Summarize the following article in less than 100 words: {article.text}"},
+            ]
+        )
+        blurb = completion.choices[0].message["content"]
         post = Post(
-            blurb=article.title,
-            content=markdown_content,
+            blurb=blurb,
+            content=article.text,
             type='external',
             document=document,
             url=url,
@@ -41,11 +50,9 @@ def save_article():
             title=article.title,
         )
 
-        # Save the Post instance to the database
         db.session.add(post)
         db.session.commit()
 
-        # Return the saved Post data as JSON
         return jsonify(post.to_dict())
     else:
         return jsonify({"error": "Not an article"}), 400
