@@ -42,17 +42,16 @@ def test_save_article(test_client, user):
     headers = {'Content-Type': 'application/json'}
 
     # Test valid article
-    with test_client.application.app_context():
-        response = test_client.post(
-            '/api/articles', data=json.dumps(valid_data), headers=headers)
-        assert response.status_code == 200
-        response_json = json.loads(response.data)
-        assert response_json['blurb'] == "Ahmad Jamal, measured maestro of the jazz piano, dies at 92"
-        assert response_json['content'].startswith(
-            "For most jazz performers, a song is part of a performance.")
-        assert response_json['url'] == "https://example.com/article"
-        assert response_json['type'] == "external"
-        assert response_json['user']['id'] == user.id
+    response = test_client.post(
+        '/api/articles', data=json.dumps(valid_data), headers=headers)
+    assert response.status_code == 200
+    response_json = json.loads(response.data)
+    assert response_json['blurb'] == "This is a test summary"
+    assert response_json['content'].startswith(
+        "For most jazz performers, a song is part of a performance.")
+    assert response_json['url'] == "https://example.com/article"
+    assert response_json['type'] == "external"
+    assert response_json['user']['id'] == user.id
 
     # Test invalid article
     response = test_client.post(

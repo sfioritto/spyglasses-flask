@@ -1,16 +1,12 @@
-import asyncio
-import aiohttp
 import gzip
 import base64
 import json
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint
 from newspaper import Article
-from spyglasses.models import Post, Note, db
+from spyglasses.models import Post, Note, db, find_post
 from spyglasses.views import load_user
-import os
-import openai
-openai.api_key = os.getenv("OPENAI_API_KEY")
+from spyglasses import ai
 
 API_VERSION = "v1"
 bp = Blueprint(API_VERSION, __name__)
@@ -33,25 +29,20 @@ async def save_article():
     article.parse()
 
     if article.is_valid_body():
-        completion = await openai.ChatCompletion.acreate(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "user", "content": f"Summarize the following article in less than 100 words: {article.text}"},
-            ]
-        )
-        blurb = completion.choices[0].message["content"]
-        post = Post(
-            blurb=blurb,
-            content=article.text,
-            type='external',
-            document=document,
-            url=url,
-            user=g.user,
-            title=article.title,
-        )
-
-        db.session.add(post)
-        db.session.commit()
+        post = find_post(article.text, g.user.id, url)
+        if not post:
+            blurb = await ai.summarize(article.text)
+            post = Post(
+                content=article.text,
+                blurb=blurb,
+                type='external',
+                document=document,
+                url=url,
+                user=g.user,
+                title=article.title,
+            )
+            db.session.add(post)
+            db.session.commit()
 
         return jsonify(post.to_dict())
     else:
@@ -79,9 +70,6 @@ def create_post():
 
     kwargs = {**data, 'user_id': g.user.id}
     post = Post(**kwargs)
-
-    if 'blurb' in data:
-        post.blurb = data['blurb']
 
     db.session.add(post)
     db.session.commit()

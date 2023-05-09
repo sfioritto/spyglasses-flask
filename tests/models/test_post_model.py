@@ -1,6 +1,8 @@
+import pytest
 from datetime import datetime
 from spyglasses.models import Post, db
 from tests.api import create_post
+from sqlalchemy.exc import IntegrityError
 
 
 def test_check_post_exists(test_client):
@@ -10,18 +12,25 @@ def test_check_post_exists(test_client):
     assert post1 is not None
 
     # Attempt to create another post with the same content
-    post2 = create_post(content="Content 1",
-                        url="https://example.com/article2")
+    with pytest.raises(IntegrityError):
+        post2 = create_post(content="Content 1",
+                            url="https://example.com/article2")
+
+    db.session.rollback()
     assert len(Post.query.all()) == 1
 
     # Attempt to create another post with the same URL
-    post3 = create_post(content="Content 2",
-                        url="https://example.com/article1")
+    with pytest.raises(IntegrityError):
+        post3 = create_post(content="Content 2",
+                            url="https://example.com/article1")
+    db.session.rollback()
     assert len(Post.query.all()) == 1
 
     # Attempt to create another post with the same content and URL
-    post4 = create_post(content="Content 1",
-                        url="https://example.com/article1")
+    with pytest.raises(IntegrityError):
+        post4 = create_post(content="Content 1",
+                            url="https://example.com/article1")
+    db.session.rollback()
     assert len(Post.query.all()) == 1
 
     # Attempt to create another post with different content and URL
@@ -61,7 +70,11 @@ def test_check_content_hash_exists(test_client):
         user_id=1,
     )
     db.session.add(post2)
-    db.session.commit()
+    # Check for IntegrityError when trying to commit the duplicate post
+    with pytest.raises(IntegrityError):
+        db.session.commit()
+
+    db.session.rollback()
 
     # Verify that only one post exists with the same content hash
     posts = Post.query.all()

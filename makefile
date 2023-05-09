@@ -20,9 +20,9 @@ test:
 		if [ ! -z "$$number" ]; then \
 			echo "Running tests with SPYGLASSES_API_VERSION=$$number"; \
 			if [ -z "$(TEST_NAME)" ]; then \
-				SPYGLASSES_API_VERSION=$$number pytest tests; \
+				SPYGLASSES_API_VERSION=$$number SPYGLASSES_ENVIRONMENT=TEST pytest tests; \
 			else \
-				SPYGLASSES_API_VERSION=$$number pytest tests -k $(TEST_NAME); \
+				SPYGLASSES_API_VERSION=$$number SPYGLASSES_ENVIRONMENT=TEST pytest tests -k $(TEST_NAME); \
 			fi; \
 		fi; \
 	done

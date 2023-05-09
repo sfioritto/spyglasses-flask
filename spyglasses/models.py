@@ -2,7 +2,7 @@ import hashlib
 from datetime import datetime
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy_serializer import SerializerMixin
-from sqlalchemy import event, or_
+from sqlalchemy import event, or_, and_
 from sqlalchemy.orm import object_session
 
 db = SQLAlchemy()
@@ -74,36 +74,27 @@ def update_content_hash(target, value, *args):
         session.flush()
 
 
-@event.listens_for(db.session, 'before_flush')
-def check_post_exists(session, flush_context, instances):
+def find_post(content, user_id, url=None):
     """
-    Check if the content_hash column already exists before creating a new Post instance.
-    If it exists, update the existing post instead of creating a new one.
-
-    Also if the new post includes a url, check if a post with the same url already exists.
+    Find or create a Post instance with the given content, user_id, and url.
     """
-    for post in session.new:
-        if not isinstance(post, Post):
-            continue
-
-        # Check if a Post instance with the same content_hash already exists in the database
-        content_hash = generate_hash(post.content)
-        if post.url:
-            existing_post = session.query(Post).filter(
+    content_hash = generate_hash(content)
+    if url:
+        existing_post = db.session.query(Post).filter(
+            and_(
+                Post.user_id == user_id,
                 or_(
                     Post.content_hash == content_hash,
-                    Post.url == post.url
+                    Post.url == url
                 )
-            ).first()
-        else:
-            existing_post = session.query(Post).filter(
+            )
+        ).first()
+    else:
+        existing_post = db.session.query(Post).filter(
+            and_(
+                Post.user_id == user_id,
                 Post.content_hash == content_hash
-            ).first()
+            )
+        ).first()
 
-        # If a Post instance with the same content_hash already exists, update it
-        if existing_post:
-            # Remove the new object from the session to prevent it from being inserted
-            session.expunge(post)
-        else:
-            # If no existing post, set the content_hash for the new post
-            post.content_hash = content_hash
+    return existing_post
