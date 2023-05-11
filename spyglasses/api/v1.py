@@ -3,10 +3,10 @@ import base64
 import json
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint
-from newspaper import Article
 from spyglasses.models import Post, Note, db, find_post
 from spyglasses.views import load_user
 from spyglasses import ai
+from markdownify import markdownify as md
 
 API_VERSION = "v1"
 bp = Blueprint(API_VERSION, __name__)
@@ -22,31 +22,30 @@ async def save_article():
     with gzip.open(BytesIO(gzipped_document), 'rt', encoding='utf-8') as f:
         document = f.read()
 
+    gzipped_readable = base64.b64decode(request_data['readable'])
+    with gzip.open(BytesIO(gzipped_readable), 'rt', encoding='utf-8') as f:
+        readable = f.read()
+
+    title = request_data['title']
+
     url = request_data['url']
+    markdown = md(readable)
+    post = find_post(markdown, g.user.id, url)
+    if not post:
+        blurb = await ai.summarize(markdown)
+        post = Post(
+            content=markdown,
+            blurb=blurb,
+            type='external',
+            document=document,
+            url=url,
+            user=g.user,
+            title=title,
+        )
+        db.session.add(post)
+        db.session.commit()
 
-    article = Article('')
-    article.set_html(document)
-    article.parse()
-
-    if article.is_valid_body():
-        post = find_post(article.text, g.user.id, url)
-        if not post:
-            blurb = await ai.summarize(article.text)
-            post = Post(
-                content=article.text,
-                blurb=blurb,
-                type='external',
-                document=document,
-                url=url,
-                user=g.user,
-                title=article.title,
-            )
-            db.session.add(post)
-            db.session.commit()
-
-        return jsonify(post.to_dict())
-    else:
-        return jsonify({"error": "Not an article"}), 400
+    return jsonify(post.to_dict())
 
 
 @bp.route('/posts', methods=['GET'])
