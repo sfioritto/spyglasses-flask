@@ -4,7 +4,7 @@ import gzip
 from spyglasses.models import Post
 from tests.api import create_post
 
-valid_html = """<html><head><title>Ahmad Jamal, measured maestro of the jazz piano, dies at 92</title></head><body><article><p>For most jazz performers, a song is part of a performance. For Ahmad Jamal, each song was a performance. Over the course of a remarkable eight-decade career, Jamal, who passed away Sunday at the age of 92, created stellar recordings both as an ambitious youth and a sagely veteran.</p>
+html = """<html><head><title>Ahmad Jamal, measured maestro of the jazz piano, dies at 92</title></head><body><article><p>For most jazz performers, a song is part of a performance. For Ahmad Jamal, each song was a performance. Over the course of a remarkable eight-decade career, Jamal, who passed away Sunday at the age of 92, created stellar recordings both as an ambitious youth and a sagely veteran.</p>
 
 <p>Jamal's death was confirmed by his daughter, Sumayah Jamal. He died Sunday afternoon in Ashley Falls, Mass., after a battle with prostate cancer.</p>
 
@@ -23,42 +23,36 @@ valid_html = """<html><head><title>Ahmad Jamal, measured maestro of the jazz pia
 
 
 def test_save_article(test_client, user):
-    valid_html_bytes = valid_html.encode('utf-8')
-    valid_html_gzipped = gzip.compress(valid_html_bytes)
-    valid_html_gzipped_b64 = base64.b64encode(
-        valid_html_gzipped).decode('utf-8')
-    valid_data = {"document": valid_html_gzipped_b64,
-                  "url": "https://example.com/article"}
+    readable = "This is a test summary"
+    readable_bytes = readable.encode('utf-8')
+    readable_gzipped = gzip.compress(readable_bytes)
+    readable_gzipped_b64 = base64.b64encode(readable_gzipped).decode('utf-8')
 
-    # Preparing an invalid article data
-    invalid_html = "<html><head><title>Test Title</title></head><body><p></p></body></html>"
-    invalid_html_bytes = invalid_html.encode('utf-8')
-    invalid_html_gzipped = gzip.compress(invalid_html_bytes)
-    invalid_html_gzipped_b64 = base64.b64encode(
-        invalid_html_gzipped).decode('utf-8')
-    invalid_data = {"document": invalid_html_gzipped_b64,
-                    "url": "https://example.com/invalid-article"}
+    html_bytes = html.encode('utf-8')
+    html_gzipped = gzip.compress(html_bytes)
+    html_gzipped_b64 = base64.b64encode(
+        html_gzipped).decode('utf-8')
+
+    data = {"document": html_gzipped_b64,
+            "readable": readable_gzipped_b64,
+            "title": "Test Title",
+            "url": "https://example.com/article"}
 
     headers = {'Content-Type': 'application/json'}
 
     # Test valid article
     response = test_client.post(
-        '/api/articles', data=json.dumps(valid_data), headers=headers)
+        '/api/articles', data=json.dumps(data), headers=headers)
     assert response.status_code == 200
     response_json = json.loads(response.data)
     assert response_json['blurb'] == "This is a test summary"
-    assert response_json['content'].startswith(
-        "For most jazz performers, a song is part of a performance.")
+    assert response_json['content'].startswith(readable)
     assert response_json['url'] == "https://example.com/article"
     assert response_json['type'] == "external"
-    assert response_json['user']['id'] == user.id
-
-    # Test invalid article
-    response = test_client.post(
-        '/api/articles', data=json.dumps(invalid_data), headers=headers)
-    assert response.status_code == 400
-    response_json = json.loads(response.data)
-    assert response_json["error"] == "Not an article"
+    # Checking if the user is associated with the post
+    post = Post.query.filter_by(url="https://example.com/article").first()
+    assert post is not None
+    assert user in post.users
 
 
 def test_get_posts(test_client, user):

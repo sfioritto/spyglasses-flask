@@ -7,6 +7,12 @@ from sqlalchemy.orm import object_session
 
 db = SQLAlchemy()
 
+user_post_association = db.Table(
+    'user_post_association',
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
+    db.Column('post_id', db.Integer, db.ForeignKey('post.id'))
+)
+
 
 class User(db.Model, SerializerMixin):
     serialize_only = ('id', 'auth_user_id', 'email',
@@ -16,12 +22,13 @@ class User(db.Model, SerializerMixin):
     family_name = db.Column(db.String(120), nullable=True)
     id = db.Column(db.Integer, primary_key=True)
     auth_user_id = db.Column(db.String(64), unique=True, nullable=False)
-    posts = db.relationship('Post', backref='user', lazy=True)
+    posts = db.relationship(
+        'Post', secondary=user_post_association, backref=db.backref('users', lazy=True))
 
 
 class Post(db.Model, SerializerMixin):
-    serialize_only = ('id', 'title', 'blurb', 'created_at', 'user.id',
-                      'url', 'type', 'updated_at', 'content', 'notes.id', 'highlights.id')
+    serialize_only = ('id', 'title', 'blurb', 'created_at', 'url',
+                      'type', 'updated_at', 'content', 'notes.id', 'highlights.id')
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=True)
     blurb = db.Column(db.Text, nullable=True)
@@ -33,7 +40,6 @@ class Post(db.Model, SerializerMixin):
                            default=datetime.utcnow, onupdate=datetime.utcnow)
     highlights = db.relationship('Highlight', backref='post', lazy=True)
     notes = db.relationship('Note', backref='post', lazy=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     content_hash = db.Column(db.String(64), nullable=False, unique=True)
     url = db.Column(db.String(2048), nullable=True, unique=True)
     type = db.Column(db.Enum('public', 'private', 'external',
@@ -74,27 +80,21 @@ def update_content_hash(target, value, *args):
         session.flush()
 
 
-def find_post(content, user_id, url=None):
+def find_post(content, url=None):
     """
-    Find or create a Post instance with the given content, user_id, and url.
+    Find or create a Post instance with the given content and url.
     """
     content_hash = generate_hash(content)
     if url:
         existing_post = db.session.query(Post).filter(
-            and_(
-                Post.user_id == user_id,
-                or_(
-                    Post.content_hash == content_hash,
-                    Post.url == url
-                )
+            or_(
+                Post.content_hash == content_hash,
+                Post.url == url
             )
         ).first()
     else:
         existing_post = db.session.query(Post).filter(
-            and_(
-                Post.user_id == user_id,
-                Post.content_hash == content_hash
-            )
+            Post.content_hash == content_hash
         ).first()
 
     return existing_post

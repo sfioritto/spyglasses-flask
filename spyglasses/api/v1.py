@@ -3,10 +3,12 @@ import base64
 import json
 from io import BytesIO
 from flask import g, jsonify, request, Blueprint
-from spyglasses.models import Post, Note, db, find_post
+from spyglasses.models import Post, Note, db, find_post, user_post_association
 from spyglasses.views import load_user
 from spyglasses import ai
 from markdownify import markdownify as md
+from sqlalchemy import and_
+
 
 API_VERSION = "v1"
 bp = Blueprint(API_VERSION, __name__)
@@ -30,7 +32,7 @@ async def save_article():
 
     url = request_data['url']
     markdown = md(readable)
-    post = find_post(markdown, g.user.id, url)
+    post = find_post(markdown, url)
     if not post:
         blurb = await ai.summarize(markdown)
         post = Post(
@@ -39,11 +41,23 @@ async def save_article():
             type='external',
             document=document,
             url=url,
-            user=g.user,
             title=title,
         )
         db.session.add(post)
-        db.session.commit()
+    # Check if the user is already associated with the post
+    user_has_post = db.session.query(user_post_association).filter(
+        and_(
+            user_post_association.c.user_id == g.user.id,
+            user_post_association.c.post_id == post.id
+        )
+    ).one_or_none()
+
+    if not user_has_post:
+        association = user_post_association.insert().values(
+            user_id=g.user.id, post_id=post.id)
+        db.session.execute(association)
+
+    db.session.commit()
 
     return jsonify(post.to_dict())
 
@@ -67,8 +81,9 @@ def create_post():
     if not data or 'content' not in data or 'type' not in data:
         return jsonify({"error": "Missing content or type in request data"}), 400
 
-    kwargs = {**data, 'user_id': g.user.id}
-    post = Post(**kwargs)
+    post = Post(content=data['content'], type=data['type'])
+
+    g.user.posts.append(post)
 
     db.session.add(post)
     db.session.commit()

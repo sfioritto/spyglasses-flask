@@ -18,12 +18,14 @@ def get_or_create_user(auth_user_id='dev'):
     return user
 
 
-def create_post(**kwargs):
-    if 'user' not in kwargs:
-        kwargs['user'] = get_or_create_user()
-    if 'type' not in kwargs:
-        kwargs['type'] = 'public'
-    post = Post(**kwargs)
+def create_post(user=None, type='public', **kwargs):
+    if not user:
+        user = get_or_create_user()
+
+    post = Post(type=type, **kwargs)
+
+    user.posts.append(post)
+
     db.session.add(post)
     db.session.commit()
     return post

@@ -56,7 +56,6 @@ def test_check_content_hash_exists(test_client):
         content='Test Content 1',
         type='external',
         created_at=datetime.utcnow(),
-        user_id=1,
     )
     db.session.add(post1)
     db.session.commit()
@@ -67,7 +66,6 @@ def test_check_content_hash_exists(test_client):
         content='Test Content 1',
         type='external',
         created_at=datetime.utcnow(),
-        user_id=1,
     )
     db.session.add(post2)
     # Check for IntegrityError when trying to commit the duplicate post
