@@ -2,7 +2,7 @@ from spyglasses.models import Post, db, User
 
 
 def get_or_create_user(auth_user_id='dev'):
-    user = User.query.filter_by(auth_user_id='dev').first()
+    user = User.query.filter_by(auth_user_id=auth_user_id).first()
 
     # If the dev user does not exist, create one
     if user is None:

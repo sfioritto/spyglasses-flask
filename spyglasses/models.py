@@ -51,6 +51,7 @@ class Highlight(db.Model, SerializerMixin):
     start_pos = db.Column(db.Integer, nullable=False)
     end_pos = db.Column(db.Integer, nullable=False)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     notes = db.relationship('Note', backref='highlight', lazy=True)
 
 
@@ -61,6 +62,7 @@ class Note(db.Model, SerializerMixin):
     highlight_id = db.Column(
         db.Integer, db.ForeignKey('highlight.id'), nullable=True)
     post_id = db.Column(db.Integer, db.ForeignKey('post.id'), nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 
 def generate_hash(content):

@@ -127,8 +127,9 @@ def delete_post(post_id):
 @bp.route('/posts/<int:post_id>/notes', methods=['GET'])
 def get_notes(post_id):
     post = Post.query.get_or_404(post_id)
-    notes = [note.to_dict() for note in post.notes]
-    return jsonify(notes)
+    notes = Note.query.filter_by(post_id=post.id, user_id=g.user.id).all()
+    notes_dicts = [note.to_dict() for note in notes]
+    return jsonify(notes_dicts)
 
 
 @bp.route('/posts/<int:post_id>/notes', methods=['POST'])
@@ -138,7 +139,7 @@ def create_note(post_id):
     if not data or 'content' not in data:
         return jsonify({"error": "Missing content in request data"}), 400
 
-    note = Note(content=data['content'], post_id=post.id)
+    note = Note(content=data['content'], post_id=post.id, user_id=g.user.id)
     db.session.add(note)
     db.session.commit()
 
