@@ -39,10 +39,10 @@ async def save_article():
     markdown = md(readable)
     post = find_post(markdown, url)
     if not post:
-        blurb = await ai.summarize(markdown)
+        summary = await ai.summarize(markdown)
         post = Post(
             content=markdown,
-            blurb=blurb,
+            summary=summary,
             type='external',
             document=document,
             url=url,
@@ -107,8 +107,8 @@ def update_post(post_id):
     post = Post.query.get_or_404(post_id)
     data = request.get_json()
 
-    if "blurb" in data:
-        post.blurb = data["blurb"]
+    if "summary" in data:
+        post.summary = data["summary"]
     if "content" in data:
         post.content = data["content"]
     if "type" in data:

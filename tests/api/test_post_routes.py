@@ -45,7 +45,7 @@ def test_save_article(test_client, user):
         '/api/articles', data=json.dumps(data), headers=headers)
     assert response.status_code == 200
     response_json = json.loads(response.data)
-    assert response_json['blurb'] == "This is a test summary"
+    assert response_json['summary'] == "This is a test summary"
     assert response_json['content'].startswith(readable)
     assert response_json['url'] == "https://example.com/article"
     assert response_json['type'] == "external"
@@ -67,7 +67,7 @@ def test_get_posts(test_client, user):
     for post in data:
         assert 'content' not in post
         assert 'id' in post
-        assert 'blurb' in post
+        assert 'summary' in post
         assert 'type' in post
         assert 'created_at' in post
         assert 'updated_at' in post
@@ -115,7 +115,7 @@ def test_get_post(test_client):
 def test_update_post(test_client):
     post = create_post(content='Test content', type='public')
     updated_data = {
-        "blurb": "Updated blurb",
+        "summary": "Updated summary",
         "content": "Updated content",
         "type": "external"
     }
@@ -123,7 +123,7 @@ def test_update_post(test_client):
     json_data = response.get_json()
 
     assert response.status_code == 200
-    assert json_data["blurb"] == updated_data["blurb"]
+    assert json_data["summary"] == updated_data["summary"]
     assert json_data["content"] == updated_data["content"]
     assert json_data["type"] == updated_data["type"]
 

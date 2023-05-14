@@ -27,11 +27,11 @@ class User(db.Model, SerializerMixin):
 
 
 class Post(db.Model, SerializerMixin):
-    serialize_only = ('id', 'title', 'blurb', 'created_at', 'url',
+    serialize_only = ('id', 'title', 'summary', 'created_at', 'url',
                       'type', 'updated_at', 'content', 'notes.id', 'highlights.id')
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(120), nullable=True)
-    blurb = db.Column(db.Text, nullable=True)
+    summary = db.Column(db.Text, nullable=True)
     content = db.Column(db.Text, nullable=False)
     document = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False,
