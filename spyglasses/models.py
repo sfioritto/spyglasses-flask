@@ -41,7 +41,7 @@ class Post(db.Model, SerializerMixin):
     highlights = db.relationship('Highlight', backref='post', lazy=True)
     notes = db.relationship('Note', backref='post', lazy=True)
     content_hash = db.Column(db.String(64), nullable=False, unique=True)
-    url = db.Column(db.String(2048), nullable=True, unique=True)
+    url = db.Column(db.String(2048), nullable=True)
     type = db.Column(db.Enum('public', 'private', 'external',
                      name="PostTypes"), nullable=False)
 
@@ -89,7 +89,7 @@ def find_post(content, url=None):
     content_hash = generate_hash(content)
     if url:
         existing_post = db.session.query(Post).filter(
-            or_(
+            and_(
                 Post.content_hash == content_hash,
                 Post.url == url
             )

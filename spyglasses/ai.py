@@ -1,6 +1,7 @@
 import os
 import openai
 import tiktoken
+from newspaper import Article
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
@@ -47,3 +48,19 @@ async def summarize(text):
         return "This is a test summary"
     else:
         return await recursive_summarize(text)
+
+
+def is_article(document):
+    """Checks if the text is an article"""
+    article = Article(url='')
+    article.set_html(document)
+    try:
+        article.parse()
+    except:
+        return False
+
+    # If the article has a title and some text, it might be an article
+    if article.title and article.text:
+        return True
+    else:
+        return False

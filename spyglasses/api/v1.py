@@ -29,8 +29,13 @@ async def save_article():
         readable = f.read()
 
     title = request_data['title']
-
     url = request_data['url']
+
+    if not ai.is_article(document):
+        return jsonify({
+            'message': 'Not an article'
+        }), 400
+
     markdown = md(readable)
     post = find_post(markdown, url)
     if not post:
