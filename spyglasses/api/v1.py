@@ -20,13 +20,19 @@ bp.before_request(load_user)
 async def save_article():
     request_data = json.loads(request.data)
 
-    gzipped_document = base64.b64decode(request_data['document'])
-    with gzip.open(BytesIO(gzipped_document), 'rt', encoding='utf-8') as f:
-        document = f.read()
+    try:
+        gzipped_document = base64.b64decode(request_data['document'])
+        with gzip.open(BytesIO(gzipped_document), 'rt', encoding='utf-8') as f:
+            document = f.read()
+    except KeyError:
+        document = None
 
-    gzipped_readable = base64.b64decode(request_data['readable'])
-    with gzip.open(BytesIO(gzipped_readable), 'rt', encoding='utf-8') as f:
-        readable = f.read()
+    try:
+        gzipped_readable = base64.b64decode(request_data['readable'])
+        with gzip.open(BytesIO(gzipped_readable), 'rt', encoding='utf-8') as f:
+            readable = f.read()
+    except KeyError:
+        readable = None
 
     url = request_data['url']
 
