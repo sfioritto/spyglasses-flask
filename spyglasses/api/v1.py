@@ -28,10 +28,10 @@ async def save_article():
     with gzip.open(BytesIO(gzipped_readable), 'rt', encoding='utf-8') as f:
         readable = f.read()
 
-    title = request_data['title']
     url = request_data['url']
 
-    if not ai.is_article(document):
+    article = ai.get_article(document)
+    if not article:
         return jsonify({
             'message': 'Not an article'
         }), 400
@@ -46,7 +46,7 @@ async def save_article():
             type='external',
             document=document,
             url=url,
-            title=title,
+            title=article.title,
         )
         db.session.add(post)
     # Check if the user is already associated with the post

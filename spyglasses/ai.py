@@ -50,17 +50,17 @@ async def summarize(text):
         return await recursive_summarize(text)
 
 
-def is_article(document):
+def get_article(document):
     """Checks if the text is an article"""
     article = Article(url='')
     article.set_html(document)
     try:
         article.parse()
     except:
-        return False
+        return None
 
     # If the article has a title and some text, it might be an article
     if article.title and article.text:
-        return True
+        return article
     else:
-        return False
+        return None
